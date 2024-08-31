@@ -5,8 +5,7 @@ services:
     image: nginx:alpine
     container_name: firewall
     ports:
-      - "80:80"
-      - "8000:8000"  # Puerto para el backend
+      - "80:80"  # Único puerto expuesto
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
     depends_on:
@@ -17,20 +16,24 @@ services:
 
   backend:
     build:
-      context: ./apidiplomadoFinal  # Asegúrate de que este sea el camino correcto
+      context: ./apidiplomadoFinal
       dockerfile: Dockerfile
     image: backend-fastapi
     container_name: backend
     networks:
       - app_net
     environment:
+<<<<<<< Updated upstream
       - MONGO_URL=mongodb://persistencia:27017  # Añadido para conectar con MongoDB
+=======
+      - MONGO_URL=mongodb://persistencia:27017/pruebaDB
+>>>>>>> Stashed changes
     depends_on:
       - persistencia
 
   frontend:
     build:
-      context: ./frontProyectoFinal  # Asegúrate de que este sea el camino correcto
+      context: ./frontProyectoFinal
       dockerfile: Dockerfile
     image: frontend-angular
     container_name: frontend
@@ -41,15 +44,24 @@ services:
     image: mongo:latest
     container_name: persistencia
     volumes:
-      - ./data:/data/db
-      - ./mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js
+      - mongodb_data:/data/db
+      - ./mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
     networks:
       - app_net
+<<<<<<< Updated upstream
     environment:
       - MONGO_INITDB_ROOT_USERNAME=root
       - MONGO_INITDB_ROOT_PASSWORD=persistencia-12345
     expose:
       - "27017"  # Puerto interno de MongoDB
+=======
+    command: mongod --bind_ip_all
+    environment:
+      MONGO_INITDB_DATABASE: pruebaDB
+
+volumes:
+  mongodb_data:
+>>>>>>> Stashed changes
 
 networks:
   app_net:

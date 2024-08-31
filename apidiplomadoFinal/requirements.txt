@@ -3,3 +3,4 @@ fastapi
 cryptography
 jwt
 bcrypt
+python-jose[cryptography]
