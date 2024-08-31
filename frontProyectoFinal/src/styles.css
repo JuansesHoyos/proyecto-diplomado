@@ -18,3 +18,73 @@ button {
 button:hover {
   background-color: #0056b3;
 }
+
+
+/* Fondo del modal */
+.modal {
+  display: block; /* Visible cuando hay un error */
+  position: fixed;
+  z-index: 1; /* Colocar sobre otros elementos */
+  left: 0;
+  top: 0;
+  width: 100%; /* Ancho completo */
+  height: 100%; /* Altura completa */
+  overflow: auto; /* Scroll si es necesario */
+  background: linear-gradient(to right, rgba(0,0,0,0.8), rgba(0,0,0,0.4)); /* Fondo degradado */
+}
+
+/* Contenido del modal */
+.modal-content {
+  background-color: #fff;
+  margin: 15% auto; /* Centrar vertical y horizontalmente */
+  padding: 20px;
+  border: 1px solid #888;
+  width: 80%; /* Ancho del modal */
+  max-width: 500px; /* Ancho máximo */
+  border-radius: 10px; /* Bordes redondeados */
+  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+  text-align: center;
+  animation: slide-down 0.5s ease-out; /* Animación de entrada */
+}
+
+/* Botón de cerrar */
+.close {
+  color: #ff5c5c; /* Color rojo */
+  float: right;
+  font-size: 28px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.close:hover,
+.close:focus {
+  color: #ff1a1a; /* Color rojo más oscuro */
+  text-decoration: none;
+  cursor: pointer;
+}
+
+/* Título del modal */
+.modal-content h2 {
+  margin-top: 0;
+  font-size: 24px;
+  color: #333; /* Color del texto */
+}
+
+/* Texto del mensaje de error */
+.modal-content p {
+  font-size: 18px;
+  margin: 20px 0;
+  color: #666; /* Color del texto */
+}
+
+/* Animación de entrada */
+@keyframes slide-down {
+  from {
+    transform: translateY(-50px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
