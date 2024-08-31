@@ -6,7 +6,7 @@ from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from fastapi import FastAPI, HTTPException, Header
 from fastapi.security import HTTPBearer
-from jwt import jwt
+import jwt
 from pydantic import BaseModel
 from pymongo import MongoClient
 from starlette.middleware.cors import CORSMiddleware
@@ -50,15 +50,16 @@ class UserModel(BaseModel):
     username: str
 
 
+
 class UserResponse(BaseModel):
     username: str
     publicKey: str
 
 
 class UserLoginModel(BaseModel):
-    password: str
     username: str
-
+    password: Optional[str]
+    token: Optional[str] = None
 
 # Funciones
 # Función para generar llaves RSA
@@ -107,14 +108,14 @@ def generate_and_assign_token(user: UserLoginModel):
         "sub": user.username,
         "name": user.username
     }
-    user.token = generate_token(token_data)
-    return user
+    signeduser = generate_token(token_data)
+    return signeduser
 
 
 # Función para verificar JWT
 def verify_token(user: UserModel):
     try:
-        payload = jwt.decode(user.token, SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(user, SECRET_KEY, algorithms=[ALGORITHM])
         # Extract claims
         username: str = payload.get("sub")
         iss: str = payload.get("iss")
@@ -215,22 +216,23 @@ def register_user(user: UserLoginModel):
 @app.post("/login/")
 def login_user(user: UserLoginModel):
     # Buscar el usuario en la base de datos
-    print("COSAS 0")
     db_user = login_collection.find_one({"username": user.username})
+
     if not db_user:
-        print("COSAS1")
         raise HTTPException(status_code=400, detail="Credenciales inválidas")
 
     # Verificar la contraseña
     if not user.password == db_user['password']:
-        print("COSAS2")
         raise HTTPException(status_code=400, detail="Credenciales inválidas")
 
     # Generar y asignar el token JWT
-    token = generate_and_assign_token(user)
-    signedUser: UserModel = UserModel(username=user.username, token=token)
 
-    return {signedUser}
+    token = generate_and_assign_token(user)
+    #signedUser: UserLoginModel = UserLoginModel(username=db_user["username"], token=token, password="")
+    print("-------------------------------------------")
+    print(token)
+    print("-------------------------------------------")
+    return {token}
 
 
 @app.get("/")
