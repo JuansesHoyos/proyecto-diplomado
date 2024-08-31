@@ -17,5 +17,14 @@
     </div>
     <button type="submit" [disabled]="loginForm.invalid">Iniciar Sesión</button>
   </form>
+  <br>
   <button [routerLink]="['/register']"> Registrate</button>
+</div>
+
+<div class="modal" *ngIf="loginError">
+  <div class="modal-content">
+    <span class="close" (click)="loginError = null">×</span>
+    <h2>Error de Inicio de Sesión</h2>
+    <p>{{ loginError }}</p>
+  </div>
 </div>

@@ -16,6 +16,7 @@ import {Router} from "@angular/router";
 
 export class RegisterComponent implements OnInit{
   registerForm: FormGroup;
+  loginError: string | null = null;
 
 
   constructor(private fb: FormBuilder, private registerService: LoginAndRegisterServiceService, private router: Router) {
@@ -39,12 +40,12 @@ export class RegisterComponent implements OnInit{
       password: hashedPassword,
     })
 
-    let resp = this.registerService.registerMethod(userLogin).subscribe({
+    this.registerService.registerMethod(userLogin).subscribe({
       next: (response) =>{
         console.log('Success:', response)
         this.router.navigate(['/login'])
       },
-      error: (error) => console.error('Error:', error)
+      error: (error) => this.loginError = error.error?.detail || 'Error desconocido'
     });
   }
 }

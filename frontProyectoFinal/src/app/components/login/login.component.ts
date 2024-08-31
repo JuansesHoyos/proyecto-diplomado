@@ -5,7 +5,6 @@ import {NgIf} from "@angular/common";
 import {Router, RouterLink} from "@angular/router";
 import {LoginAndRegisterServiceService} from "../../services/login-and-register-service.service";
 import {Login} from "../../class/login";
-import {ifError} from "node:assert";
 
 @Component({
   selector: 'app-login',
@@ -20,6 +19,7 @@ import {ifError} from "node:assert";
 })
 export class LoginComponent {
   loginForm: FormGroup;
+  loginError: string | null = null;
 
   constructor(private fb: FormBuilder, private loginService: LoginAndRegisterServiceService, private router: Router) {
     this.loginForm = this.fb.group({
@@ -42,7 +42,7 @@ export class LoginComponent {
         password: hashedPassword,
       })
 
-      let resp = this.loginService.loginMethod(userLogin).subscribe({
+      this.loginService.loginMethod(userLogin).subscribe({
         next: (response) => {
           console.log('Success:', response)
           if (typeof response.token === "string") {
@@ -51,16 +51,9 @@ export class LoginComponent {
           this.router.navigate(['/generate-keys'])
         },
         error: (error) =>{
-          console.error('Error:', error)
-
+          this.loginError = error.error?.detail || 'Error desconocido';
         }
       });
-
-
-
-
-      console.log('Usuario:', username);
-      console.log('Contraseña:', password);
     } else {
       console.log('Formulario no válido');
     }
