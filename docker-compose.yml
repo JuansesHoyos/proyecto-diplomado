@@ -17,16 +17,20 @@ services:
 
   backend:
     build:
-      context: ./prueba/prueba/apidiplomadoFinal
+      context: ./apidiplomadoFinal  # Asegúrate de que este sea el camino correcto
       dockerfile: Dockerfile
     image: backend-fastapi
     container_name: backend
     networks:
       - app_net
+    environment:
+      - MONGO_URL=mongodb://persistencia:27017  # Añadido para conectar con MongoDB
+    depends_on:
+      - persistencia
 
   frontend:
     build:
-      context: ./Taller2/frontProyectoFinal
+      context: ./frontProyectoFinal  # Asegúrate de que este sea el camino correcto
       dockerfile: Dockerfile
     image: frontend-angular
     container_name: frontend
@@ -41,6 +45,11 @@ services:
       - ./mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js
     networks:
       - app_net
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_ROOT_PASSWORD=persistencia-12345
+    expose:
+      - "27017"  # Puerto interno de MongoDB
 
 networks:
   app_net:
