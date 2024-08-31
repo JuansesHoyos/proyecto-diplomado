@@ -17,16 +17,44 @@ from fastapi.security import OAuth2PasswordBearer
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 # Configuración de los tokens
-SECRET_KEY = "llaveSuperSecreta"
+SECRET_KEY = """"
+MIIEowIBAAKCAQBH/rX1D77cYRH82bsq1Beqs98A50xxVIWrQ/+64LXcYO6MMNy4
+pauVB/8+pWLdRsbMQQyhdFblST/67vqh4ZnQNpxQrdlgc7VruPoqqH+CbjdExF7C
+BkBM5FUD3Wo4DzaxszXDO8fPzjtxlzlIiNg2sn73cjhdNwZ5x1yQixM57tUZ9jnI
+BNKGsMWshm4kj5RIrD/Eh7kJt80jBoDAACh1fBPlAIBT8vOkqCUGhMIEVbn69hYq
+DGMm6aE3gXq8YwzMQl870hKJHnN3TRNvEcC6pZOouvWuVcuewjtZjUV8OiMIPkoa
+4fZRb2SlrD1HQhbpsY7YKrQCndGwj0FlD4LbAgMBAAECggEACP/NvtQ5B1Ma7IBK
+5Q+d5biWJ4bCB2iJTN8zGCj+ko2LQ/rXnD0ZNYfKYApMUVyHfQCkk4n3UrHVTYiR
+y6pnj59D6tHQWj4cb1qv6qUlSyh7wBzLu3UMlI/2EIWcwWUlcRD1p3HRiCg/RfOh
+NW/llvC47jVY1k4KgS5qY6b+wD74Z6nxcykP0PEsiQUpvZYrOZWDiCcsyneRVSW5
+VGMUn8b0luo5V6RFcuGTnNqJ83dxUQMCJxKC7Zvek4ro0RaDiZHhCeqFYva0ZQzc
+w5Up1MnSACKxUOhGJtJh0XLgel3LQJtUEV1D9ME4lkJdyzwDucab1nlzFnW/ayeT
+bbcAAQKBgQCPFKjcarxvfoEEh/A27Vu6HvJpQg7X38Y6MPCSjkvGqSJ/93kuv/zb
+Ssn12y2HmnKQ+s7svsSlyf4Ck5AQXNnrOlJYIpvs5mlFZz6/oZwMVoefukAemES5
+1kHP2fRhHVpwRgXxO49UJpMaX5trWfve8AZgjC5axkYE0h4ZWi2kYQKBgQCA0DqU
+dHRLOCfVUwihITSTq7PtlSM5nM60jF16YNEZtXzw/pDPhQkvoKX7N+YD+dgCvISQ
+GqJtW/U9KKWHf458kUSyOtmrNtRzMgRFSeZJFIC9ntVLeURZT7wmYPNU9O2FzwOz
+ecf3mrLfijkxgHfAS1iBY1IMvREd1zkzYI5wuwKBgQCFibSoM343WQw1HGKYASPx
+K9z3XE3aMOIjgXWmcuRKP6URZflWJp1qVfz0V2HBA+cVZOAnmUyTp1hJM0vr2Z0R
+q9capwJ8MffibJ/l3oF0CnZ+Hyik5VyPTWcTBMrOsMStsMzu/rWgxnfYz46QvOUU
+h1SMW4kP86l56llpM/8RQQKBgBsHFfOGR8xsmPcKuBnO9NAzS8qC62QwQbLibM67
+t8QUL4YFc+8G8/l5VLpUbT/SUX+pfIsb+47Ep71QZQL8QbJjbK2U6Y0iMQuGqBy9
+t8MHuUeQJyLx6+RtdYX7+7KMvbXAzP8Ag3OxkuySfROk5/uCE6z6YQHpPcksGoVs
+Mhb3AoGBAI0xS/a5QmKEYb2zcttLb2XymOerIjeoKwxqql9ezdfoHLzo/t+5yf1y
+MFV8I5IrbXSZzqsvKr80rQWNc2b+5BgsOxNQ2J+xpu5NWL20bueAZwusTShRtLL6
+D+m1G7AJ0RJgilf4cghcMYYOBL3AGXPdAgFaCSOoSL9S27E5aoO+
+"""
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 ISSUER = "DavidJuanJuanAndres"
+AUDIENCE = "Proyecto Diplomado"
 
 # Definición del esquema de seguridad JWT
 security = HTTPBearer()
 
 # Conexión a MongoDB
-dburl = os.getenv('MONGO_URL', 'mongodb://persistencia:27017/pruebaDB')
+dburl = os.getenv('MONGO_URL', 'mongodb://localhost:27017/pruebaDB')
+#dburl = os.getenv('MONGO_URL', 'mongodb://persistencia:27017/pruebaDB')
 client = MongoClient(dburl)
 db = client["pruebaDB"]
 users_collection = db['Usuario']
@@ -106,7 +134,8 @@ def generate_and_assign_token(user: UserLoginModel):
         "nbf": datetime.utcnow(),
         "iss": ISSUER,
         "sub": user.username,
-        "name": user.username
+        "name": user.username,
+        "aud": AUDIENCE
     }
     signeduser = generate_token(token_data)
     return signeduser
@@ -121,6 +150,7 @@ def verify_token(user: UserModel):
         iss: str = payload.get("iss")
         exp: int = payload.get("exp")
         nbf: int = payload.get("nbf")
+        aud: str = payload.get("aud")
 
         # Validate claims
         if username is None:
@@ -136,6 +166,8 @@ def verify_token(user: UserModel):
         if nbf is None or nbf >= current_time:
             raise HTTPException(status_code=403, detail="Token no válido aún")
 
+        if aud is None or aud != AUDIENCE:
+            raise HTTPException(status_code=403, detail="La audiencia no es valida")
             return True
 
     except HTTPException:

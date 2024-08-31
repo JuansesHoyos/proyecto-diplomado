@@ -6,11 +6,12 @@ import {KeysService} from "./services/keys-service.service";
 import {LoginComponent} from "./components/login/login.component";
 import {RegisterComponent} from "./components/register/register.component";
 import {LoginAndRegisterServiceService} from "./services/login-and-register-service.service";
+import {HomeComponent} from "./components/home/home.component";
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, GenerateKeysComponent, HttpClientModule, LoginComponent, RegisterComponent],
+  imports: [RouterOutlet, GenerateKeysComponent, HttpClientModule, LoginComponent, RegisterComponent, HomeComponent],
   providers: [KeysService, LoginAndRegisterServiceService],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css'

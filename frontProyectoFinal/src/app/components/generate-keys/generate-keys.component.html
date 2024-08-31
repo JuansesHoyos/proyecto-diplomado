@@ -2,17 +2,16 @@
   <h1>Generar Claves SSH</h1>
 
   <div class="form">
-    <input placeholder="Introduzca su nombre de usuario" [(ngModel)]="username" value="{{ usuario?.userName }}" required/>
-    <button (click) = "generarLlaves()">Generar</button>
-    <button (click)="downloadPrivateKey()">Descargar Llave Privada</button>
-    <button (click)="getPublicKeyFromUser()">Imprimir llave publica de un usuario</button>
-  </div>
-
-  <div class="keys">
     <div>
       <strong>Nombre de usuario:</strong>
       <span>{{ usuario?.userName }}</span>
     </div>
+    <button (click) = "generarLlaves()">Generar</button>
+    <button (click)="downloadPrivateKey()">Descargar Llave Privada</button>
+  </div>
+
+  <div class="keys">
+
     <div>
       <strong>Llave privada:</strong>
       <br>

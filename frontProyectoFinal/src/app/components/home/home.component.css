@@ -1,0 +1,66 @@
+.sidenav {
+  height: 100%;
+  width: 60px; /* Ancho inicial */
+  position: fixed;
+  z-index: 1;
+  top: 0;
+  left: 0;
+  background-color: #111;
+  overflow-x: hidden;
+  transition: 0.5s;
+}
+
+.sidenav.expanded {
+  width: 200px; /* Ancho expandido */
+}
+
+.sidenav .burger-button {
+  font-size: 30px;
+  cursor: pointer;
+  background: none;
+  border: none;
+  color: #fff;
+  margin: 10px;
+}
+
+.sidenav .menu-items a {
+  padding: 10px 15px;
+  text-decoration: none;
+  font-size: 18px;
+  color: #818181;
+  display: flex;
+  align-items: center;
+  transition: 0.3s;
+}
+
+.sidenav .menu-items a:hover {
+  color: #f1f1f1;
+}
+
+.sidenav .menu-items .icon {
+  margin-right: 10px;
+}
+
+.sidenav .menu-items .text {
+  display: none;
+}
+
+.sidenav.expanded .menu-items .text {
+  display: inline;
+}
+
+hr {
+  margin: 10px 0;
+  border: 0;
+  border-top: 1px solid #818181;
+}
+
+.content {
+  margin-left: 60px; /* Margen inicial */
+  padding: 20px;
+  transition: margin-left 0.5s;
+}
+
+.sidenav.expanded ~ .content {
+  margin-left: 200px; /* Margen expandido */
+}

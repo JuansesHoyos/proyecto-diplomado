@@ -2,6 +2,7 @@ import {Component, OnInit} from '@angular/core';
 import {KeysService} from "../../services/keys-service.service";
 import {User} from "../../class/user";
 import {FormsModule} from "@angular/forms";
+import {JwtHelperService} from "@auth0/angular-jwt";
 
 
 @Component({
@@ -17,8 +18,18 @@ import {FormsModule} from "@angular/forms";
 export class GenerateKeysComponent implements OnInit {
   username: string = '';
   usuario: User | null = null;
+  helper = new JwtHelperService();
 
   ngOnInit(): void {
+    let token = localStorage.getItem('jwt_token');
+    let decodeToken;
+
+    if (typeof token === "string") {
+      decodeToken = this.helper.decodeToken(token);
+      console.log(decodeToken);
+      this.username = decodeToken.name;
+      console.log(this.username);
+    }
   }
 
   constructor(private keysService: KeysService) { }
@@ -47,10 +58,6 @@ export class GenerateKeysComponent implements OnInit {
     }
   }
 
-  getPublicKeyFromUser(){
-    let resp = this.keysService.getUsuarios(this.username)
-    console.log("Getting keys from user", resp);
-  }
   generarLlaves(): void {
     const username = this.username;
     if (username) {
