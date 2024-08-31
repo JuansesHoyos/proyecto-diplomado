@@ -1,6 +1,5 @@
 pymongo
 fastapi
-uvicorn
 cryptography
 jwt
 bcrypt

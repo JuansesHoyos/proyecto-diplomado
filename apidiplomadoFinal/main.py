@@ -4,7 +4,7 @@ from typing import Optional, Annotated
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
-from fastapi import FastAPI, HTTPException, Header
+from fastapi import FastAPI, HTTPException
 from fastapi.security import HTTPBearer
 from jwt import jwt
 from pydantic import BaseModel
@@ -28,7 +28,7 @@ security = HTTPBearer()
 # Conexión a MongoDB
 dburl = os.getenv('MONGO_URL')
 client = MongoClient(dburl)
-db = client["dbproyecto"]
+db = client["pruebaDB"]
 users_collection = db['Usuario']
 login_collection = db['Login']
 
