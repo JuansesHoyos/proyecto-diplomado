@@ -4,9 +4,9 @@ from typing import Optional
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
-from fastapi import FastAPI, HTTPException, Header
-from fastapi.security import HTTPBearer
-import jwt
+from fastapi import FastAPI, HTTPException, Header, Depends
+from fastapi.security import HTTPBearer, OAuth2PasswordBearer
+from jose import jwt, JWTError
 from pydantic import BaseModel
 from pymongo import MongoClient
 from starlette.middleware.cors import CORSMiddleware
@@ -24,26 +24,28 @@ ISSUER = "DavidJuanJuanAndres"
 
 # Definición del esquema de seguridad JWT
 security = HTTPBearer()
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 # Conexión a MongoDB
-dburl = os.getenv('MONGO_URL')
+dburl = os.getenv('MONGO_URL', 'mongodb://persistencia:27017/pruebaDB')
 client = MongoClient(dburl)
 db = client["pruebaDB"]
 users_collection = db['Usuario']
 login_collection = db['Login']
+firma_collection = db['Firma']
+documento_collection = db['Documento']
 
 # Definición de la aplicación FastAPI
-app = FastAPI()
+app = FastAPI(root_path="/api")
 
 # Configuración de CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allow requests from localhost:4200
+    allow_origins=["*"],
     allow_credentials=True,
-    allow_methods=["*"],  # Allow all HTTP methods
-    allow_headers=["*"],  # Allow all headers
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
-
 
 # MODELOS
 class UserModel(BaseModel):
@@ -54,7 +56,6 @@ class UserModel(BaseModel):
 class UserResponse(BaseModel):
     username: str
     publicKey: str
-
 
 class UserLoginModel(BaseModel):
     username: str
@@ -157,7 +158,6 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
 
 
 # RUTAS CONSUMIBLES
-# Ruta para generar y guardar claves
 @app.post("/generate-keys/")
 def generate_keys_for_user(user: UserModel):
     try:
@@ -184,38 +184,30 @@ def generate_keys_for_user(user: UserModel):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-
 @app.get("/getPublicKey/")
 def get_public_key(user: str):
     userfinal = users_collection.find_one({"username": user})
-    print(userfinal)
+    if not userfinal:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
     return UserResponse(
         username=userfinal["username"],
         publicKey=userfinal["public_key"]
     )
 
-
 @app.post("/register/")
 def register_user(user: UserLoginModel):
-    # Verificar si el usuario ya existe en la base de datos
     existing_user = login_collection.find_one({"username": user.username})
     if existing_user:
         raise HTTPException(status_code=400, detail="Usuario ya existe")
-
-    # Guardar el usuario con la contraseña hasheada en la base de datos
     user_data = {
         "username": user.username,
         "password": user.password
     }
-
     login_collection.insert_one(user_data)
-
     return {"message": "Usuario registrado exitosamente"}
-
 
 @app.post("/login/")
 def login_user(user: UserLoginModel):
-    # Buscar el usuario en la base de datos
     db_user = login_collection.find_one({"username": user.username})
 
     if not db_user:
