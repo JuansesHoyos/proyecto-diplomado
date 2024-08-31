@@ -45,6 +45,9 @@ export class LoginComponent {
       let resp = this.loginService.loginMethod(userLogin).subscribe({
         next: (response) => {
           console.log('Success:', response)
+          if (typeof response.token === "string") {
+            localStorage.setItem('jwt_token', response.token);
+          }
           this.router.navigate(['/generate-keys'])
         },
         error: (error) =>{

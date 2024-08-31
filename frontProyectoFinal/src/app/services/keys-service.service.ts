@@ -1,6 +1,5 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Usuario } from "../interfaces/usuario";
 import { Observable } from "rxjs";
 import { User } from "../class/user";
 
@@ -16,7 +15,7 @@ export class KeysService {
   constructor(private http: HttpClient) { }
 
   getUsuarios(username: string):Observable<User> {
-    return this.http.get<Usuario>(this.apiUrlBase+this.getFromUser+"/"+username);
+    return this.http.get<User>(this.apiUrlBase+this.getFromUser+"/"+username);
   }
 
   generarLlaves(username: string): Observable<User> {

@@ -1,26 +1,26 @@
 import os
-from datetime import timedelta, datetime
-from typing import Optional, Annotated
+from datetime import timedelta, datetime, timezone
+from typing import Optional
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Header
 from fastapi.security import HTTPBearer
 from jwt import jwt
 from pydantic import BaseModel
 from pymongo import MongoClient
 from starlette.middleware.cors import CORSMiddleware
 
-
-
 from fastapi import Depends
 from fastapi.security import OAuth2PasswordBearer
+
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 # Configuración de los tokens
 SECRET_KEY = "llaveSuperSecreta"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
+ISSUER = "DavidJuanJuanAndres"
 
 # Definición del esquema de seguridad JWT
 security = HTTPBearer()
@@ -56,11 +56,11 @@ class UserResponse(BaseModel):
 
 
 class UserLoginModel(BaseModel):
-    username: str
     password: str
+    username: str
 
 
-#Funciones
+# Funciones
 # Función para generar llaves RSA
 def generate_keys():
     # Generar un par de llaves RSA
@@ -97,29 +97,51 @@ def generate_token(data: dict, expires_delta: Optional[timedelta] = None):
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
+
 # Función para crear y asignar token a UserLoginModel
 def generate_and_assign_token(user: UserLoginModel):
     token_data = {
         "iat": datetime.utcnow(),
-        "iss": 'DavidJuanJuanAndres',
+        "nbf": datetime.utcnow(),
+        "iss": ISSUER,
         "sub": user.username,
         "name": user.username
     }
     user.token = generate_token(token_data)
     return user
 
+
 # Función para verificar JWT
-def verify_token(user: UserLoginModel):
+def verify_token(user: UserModel):
     try:
         payload = jwt.decode(user.token, SECRET_KEY, algorithms=[ALGORITHM])
+        # Extract claims
         username: str = payload.get("sub")
+        iss: str = payload.get("iss")
+        exp: int = payload.get("exp")
+        nbf: int = payload.get("nbf")
+
+        # Validate claims
         if username is None:
-            raise HTTPException(status_code=403, detail="Credenciales no válidas")
-        # Actualizar la instancia de UserLoginModel con información del token
-        user.username = username
-        return user
-    except JWTError as e:
-        raise HTTPException(status_code=403, detail="Token inválido o expirado")
+            raise HTTPException(status_code=403, detail="Nombre de usuario no válido")
+
+        if iss is None or iss != ISSUER:
+            raise HTTPException(status_code=403, detail="Issuer no válido")
+
+        current_time = datetime.now(timezone.utc).timestamp()
+        if exp is None or exp <= current_time:
+            raise HTTPException(status_code=403, detail="Token expirado")
+
+        if nbf is None or nbf >= current_time:
+            raise HTTPException(status_code=403, detail="Token no válido aún")
+
+            return True
+
+    except HTTPException:
+        raise HTTPException(status_code=403, detail="Token inválido")
+
+    except Exception:
+        raise HTTPException(status_code=403, detail="Error inesperado")
 
 
 def get_current_user(token: str = Depends(oauth2_scheme)):
@@ -129,32 +151,35 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
         if username is None:
             raise HTTPException(status_code=401, detail="Credenciales no válidas")
         return username
-    except JWTError:
+    except:
         raise HTTPException(status_code=401, detail="Token inválido o expirado")
 
 
 # RUTAS CONSUMIBLES
 # Ruta para generar y guardar claves
 @app.post("/generate-keys/")
-def generate_keys_for_user(user: UserModel, user_agent: Annotated[str | None, Header()] = None):
+def generate_keys_for_user(user: UserModel):
     try:
-        # Generar claves
-        private_key, public_key = generate_keys()
+        if verify_token(user):
+            # Generar claves
+            private_key, public_key = generate_keys()
 
-        # Guardar en la base de datos
-        user_data = {
-            "username": user.username,
-            "public_key": public_key
-        }
+            # Guardar en la base de datos
+            user_data = {
+                "username": user.username,
+                "public_key": public_key
+            }
 
-        users_collection.insert_one(user_data)
+            users_collection.insert_one(user_data)
 
-        # Retornar respuesta con las claves y el usuario
-        return {
-            "username": user.username,
-            "private_key": private_key,
-            "public_key": public_key
-        }
+            # Retornar respuesta con las claves y el usuario
+            return {
+                "username": user.username,
+                "private_key": private_key,
+                "public_key": public_key
+            }
+    except HTTPException as e:
+        raise e
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -190,21 +215,22 @@ def register_user(user: UserLoginModel):
 @app.post("/login/")
 def login_user(user: UserLoginModel):
     # Buscar el usuario en la base de datos
+    print("COSAS 0")
     db_user = login_collection.find_one({"username": user.username})
     if not db_user:
+        print("COSAS1")
         raise HTTPException(status_code=400, detail="Credenciales inválidas")
 
     # Verificar la contraseña
     if not user.password == db_user['password']:
+        print("COSAS2")
         raise HTTPException(status_code=400, detail="Credenciales inválidas")
 
     # Generar y asignar el token JWT
     token = generate_and_assign_token(user)
+    signedUser: UserModel = UserModel(username=user.username, token=token)
 
-    return {"access_token": token.token, "token_type": "bearer"}
-
-
-
+    return {signedUser}
 
 
 @app.get("/")

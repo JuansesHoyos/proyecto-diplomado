@@ -4,6 +4,7 @@ import {CommonModule} from "@angular/common";
 import {LoginAndRegisterServiceService} from "../../services/login-and-register-service.service";
 import {Login} from "../../class/login";
 import {FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators} from "@angular/forms";
+import {Router} from "@angular/router";
 
 @Component({
   selector: 'app-register',
@@ -17,7 +18,7 @@ export class RegisterComponent implements OnInit{
   registerForm: FormGroup;
 
 
-  constructor(private fb: FormBuilder, private registerService: LoginAndRegisterServiceService) {
+  constructor(private fb: FormBuilder, private registerService: LoginAndRegisterServiceService, private router: Router) {
     this.registerForm = this.fb.group({
       username: ['', [Validators.required, Validators.minLength(3)]],
       password: ['', [Validators.required, Validators.minLength(6)]]
@@ -39,7 +40,10 @@ export class RegisterComponent implements OnInit{
     })
 
     let resp = this.registerService.registerMethod(userLogin).subscribe({
-      next: (response) => console.log('Success:', response),
+      next: (response) =>{
+        console.log('Success:', response)
+        this.router.navigate(['/login'])
+      },
       error: (error) => console.error('Error:', error)
     });
   }
