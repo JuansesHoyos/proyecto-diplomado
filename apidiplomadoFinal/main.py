@@ -259,7 +259,8 @@ def login_user(user: UserLoginModel):
 
     # Generar
     token = generate_and_assign_token(user)
-    return {token}
+    full_user = {"username": user.username, "token": token}
+    return full_user
 
 
 @app.get("/")

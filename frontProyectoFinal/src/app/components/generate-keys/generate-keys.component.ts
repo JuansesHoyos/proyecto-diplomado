@@ -23,7 +23,7 @@ export class GenerateKeysComponent implements OnInit {
   ngOnInit(): void {
     let token = localStorage.getItem('jwt_token');
     let decodeToken;
-
+    console.log(token)
     if (typeof token === "string") {
       decodeToken = this.helper.decodeToken(token);
       console.log(decodeToken);

@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import {Component} from '@angular/core';
 import {FormBuilder, FormGroup, ReactiveFormsModule, Validators} from '@angular/forms';
 import * as CryptoJS from 'crypto-js';
 import {NgIf} from "@angular/common";
@@ -44,13 +44,12 @@ export class LoginComponent {
 
       this.loginService.loginMethod(userLogin).subscribe({
         next: (response) => {
-          console.log('Success:', response)
-          if (typeof response.token === "string") {
-            localStorage.setItem('jwt_token', response.token);
-          }
+          const token = response.token ?? '';
+          localStorage.setItem('jwt_token', token);
+
           this.router.navigate(['/generate-keys'])
         },
-        error: (error) =>{
+        error: (error) => {
           this.loginError = error.error?.detail || 'Error desconocido';
         }
       });
