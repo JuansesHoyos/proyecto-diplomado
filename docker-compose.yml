@@ -24,7 +24,7 @@ services:
     networks:
       - app_net
     environment:
-      - MONGO_URL=mongodb://persistencia:27017  # Añadido para conectar con MongoDB
+      - MONGO_URL=mongodb://persistencia:27017/dbproyecto # Añadido para conectar con MongoDB
     depends_on:
       - persistencia
 
@@ -45,9 +45,6 @@ services:
       - ./mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js
     networks:
       - app_net
-    environment:
-      - MONGO_INITDB_ROOT_USERNAME=root
-      - MONGO_INITDB_ROOT_PASSWORD=persistencia-12345
     expose:
       - "27017"  # Puerto interno de MongoDB
 
