@@ -1,1 +1,21 @@
-<p>file-management works!</p>
+<div class="file-upload">
+  <input type="file" (change)="onFileSelected($event)" multiple />
+  <button (click)="uploadFiles()">Subir Archivos</button>
+</div>
+
+<table>
+  <thead>
+  <tr>
+    <th>Nombre del Archivo</th>
+    <th>Tamaño</th>
+    <th>Tipo</th>
+  </tr>
+  </thead>
+  <tbody>
+  <tr *ngFor="let file of files">
+    <td>{{ file.name }}</td>
+    <td>{{ file.size }} bytes</td>
+    <td>{{ file.type }}</td>
+  </tr>
+  </tbody>
+</table>
