@@ -50,6 +50,11 @@ export class FileManagementComponent {
   }
 
 
+  signFile(): void{
+    console.log('Archivo firmado:');
+  }
+
+
 
 
 

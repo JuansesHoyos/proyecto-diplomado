@@ -8,13 +8,13 @@
   <tr>
     <th>Nombre del Archivo</th>
     <th>Firmar</th>
-    <th>Compartidos Con</th>
+    <th>Compartido Con</th>
   </tr>
   </thead>
   <tbody>
   <tr *ngFor="let file of files">
     <td>{{ file.name }}</td>
-    <td><button (click)="openPopup(file)">Firmar Archivo</button></td>
+    <td><button (click)="signFile()">Firmar Archivo</button></td>
     <td><button (click)="openPopup(file)">Ver</button></td>
   </tr>
   </tbody>
