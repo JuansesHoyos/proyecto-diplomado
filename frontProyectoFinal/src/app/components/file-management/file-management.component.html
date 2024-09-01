@@ -7,15 +7,36 @@
   <thead>
   <tr>
     <th>Nombre del Archivo</th>
-    <th>Tamaño</th>
-    <th>Tipo</th>
+    <th>Firmar</th>
+    <th>Compartidos Con</th>
   </tr>
   </thead>
   <tbody>
   <tr *ngFor="let file of files">
     <td>{{ file.name }}</td>
-    <td>{{ file.size }} bytes</td>
-    <td>{{ file.type }}</td>
+    <td><button (click)="openPopup(file)">Firmar Archivo</button></td>
+    <td><button (click)="openPopup(file)">Ver</button></td>
   </tr>
   </tbody>
 </table>
+<div class="popup" *ngIf="isPopupOpen">
+  <div class="popup-content">
+    <span class="close" (click)="closePopup()">&times;</span>
+    <h2>Compartir Archivo</h2>
+    <table>
+      <thead>
+      <tr>
+        <th>Usuario</th>
+        <th>Gestionar</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr *ngFor="let file of files">
+        <td>{{ file.name }}, 'nombre de usuario'</td>
+        <td><button (click)="stopSharing()">Dejar de compartir</button></td>
+      </tr>
+      </tbody>
+    </table>
+
+  </div>
+</div>

@@ -3,6 +3,7 @@ import {GenerateKeysComponent} from "../generate-keys/generate-keys.component";
 import {FileManagementComponent} from "../file-management/file-management.component";
 import {NgIf} from "@angular/common";
 
+
 @Component({
   selector: 'app-home',
   standalone: true,
