@@ -1,5 +1,6 @@
-import { Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import {Component} from '@angular/core';
+import {CommonModule} from '@angular/common';
+import {FileManagementService} from "../../services/file-management.service";
 
 @Component({
   selector: 'app-file-management',
@@ -14,6 +15,9 @@ export class FileManagementComponent {
   isPopupOpen = false;
   selectedFile: File | null = null;
 
+  constructor(private filesService: FileManagementService) {
+  }
+
   onFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     if (input.files) {
@@ -24,8 +28,10 @@ export class FileManagementComponent {
   }
 
   uploadFiles(): void {
-    // Aquí puedes agregar la lógica para subir los archivos al servidor
-    console.log('Archivos subidos:', this.files);
+    for (let i = 0; i < this.files.length; i++) {
+      this.filesService.subirArchivo(this.files[i]).subscribe()
+      console.log('Archivos subidos:', this.files);
+    }
   }
 
   openPopup(file: File): void {
@@ -45,17 +51,14 @@ export class FileManagementComponent {
     }
   }
 
-  stopSharing(): void{
+  stopSharing(): void {
     console.log('Dejar de compartir');
   }
 
 
-  signFile(): void{
+  signFile(): void {
     console.log('Archivo firmado:');
   }
-
-
-
 
 
 }
