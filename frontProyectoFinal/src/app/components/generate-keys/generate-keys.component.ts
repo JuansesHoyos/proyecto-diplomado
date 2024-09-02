@@ -63,8 +63,8 @@ export class GenerateKeysComponent implements OnInit {
     if (username) {
       this.keysService.generarLlaves(username).subscribe({
         next: (response: any) => {
-          // Map the response to the User object
           this.usuario = new User(response);
+
           console.log("Keys generated successfully", this.usuario);
         },
         error: (err) => {

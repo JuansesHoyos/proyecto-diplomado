@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import {HttpClient, HttpHeaders} from '@angular/common/http';
 import { Observable } from "rxjs";
 import { User } from "../class/user";
 
@@ -20,9 +20,16 @@ export class KeysService {
 
   generarLlaves(username: string): Observable<User> {
     const payload = { username };
-    return this.http.post<User>(this.apiUrlBase+this.apiGenerateKeys, payload);
+
+    const authToken = localStorage.getItem("jwt_token");
+    const headers = new HttpHeaders({
+      Authorization: `Bearer ${authToken}`,
+    });
+
+    return this.http.post<User>(
+      `${this.apiUrlBase}${this.apiGenerateKeys}`,
+      payload,
+      { headers }
+    );
   }
-
-
-
 }
