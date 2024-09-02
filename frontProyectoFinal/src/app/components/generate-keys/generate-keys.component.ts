@@ -73,4 +73,6 @@ export class GenerateKeysComponent implements OnInit {
       });
     }
   }
+
+  protected readonly User = User;
 }

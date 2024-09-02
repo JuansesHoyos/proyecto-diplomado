@@ -47,7 +47,7 @@ export class LoginComponent {
           const token = response.token ?? '';
           localStorage.setItem('jwt_token', token);
 
-          this.router.navigate(['/generate-keys'])
+          this.router.navigate(['/home'])
         },
         error: (error) => {
           this.loginError = error.error?.detail || 'Error desconocido';
