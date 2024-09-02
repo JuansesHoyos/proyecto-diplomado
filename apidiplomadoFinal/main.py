@@ -88,6 +88,7 @@ class UserLoginModel(BaseModel):
     password: Optional[str]
     token: Optional[str] = None
 
+
 # Funciones
 # Función para generar llaves RSA
 def generate_keys():
@@ -139,53 +140,25 @@ def generate_and_assign_token(user: UserLoginModel):
     signeduser = generate_token(token_data)
     return signeduser
 
-"""
-           jwt: str | bytes,
-           key: RSAPublicKey | EllipticCurvePublicKey | Ed25519PublicKey | Ed448PublicKey | PyJWK | str | bytes = "",
-           algorithms: list[str] | None = None,
-           options: dict[str, Any] | None = None,
-           verify: bool | None = None,
-           detached_payload: bytes | None = None,
-           audience: str | Iterable[str] | None = None,
-           issuer: str | list[str] | None = None,
-           leeway: float | timedelta = 0,
-           **kwargs: Any) -> Any
-"""
+
 # Función para verificar JWT
 def verify_token(token: str):
     try:
-        print("Pre payload")
-        print(token)
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM], audience=AUDIENCE, issuer=ISSUER)
-        print("POST payload")
-        # Extract claims
+
         username: str = payload.get("sub")
-        iss: str = payload.get("iss")
         exp: int = payload.get("exp")
         nbf: int = payload.get("nbf")
-        aud: str = payload.get("aud")
 
-        # Validate claims
+        # Validar atributos del token
         if username is None:
-            print("1")
             raise HTTPException(status_code=403, detail="Nombre de usuario no válido")
-
-        if iss is None or iss != ISSUER:
-            print("2")
-            raise HTTPException(status_code=403, detail="Issuer no válido")
-
         current_time = datetime.now(timezone.utc).timestamp()
         if exp is None or exp <= current_time:
-            print("3")
             raise HTTPException(status_code=403, detail="Token expirado")
-
         if nbf is None or nbf >= current_time:
-            print("4")
             raise HTTPException(status_code=403, detail="Token no válido aún")
 
-        if aud is None or aud != AUDIENCE:
-            print("5")
-            raise HTTPException(status_code=403, detail="La audiencia no es valida")
         return True
 
     except HTTPException:
@@ -212,21 +185,21 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
 @app.post("/generate-keys/")
 def generate_keys_for_user(user: UserModel, authorization: Optional[str] = Header(None)):
     try:
-        # Check if Authorization header exists
+        # Se revisa si el token viene en el header de la petición
         if authorization is None:
             raise HTTPException(status_code=401, detail="Authorization header missing")
 
-        # Extract the token from the Authorization header (Bearer <token>)
+        # Se extrae el token limpio sin el bearer
         token = authorization.split(" ")[1] if " " in authorization else authorization
 
-        # Verify the token
+        # Verificar el token
         if not verify_token(token):
             raise HTTPException(status_code=401, detail="Invalid token")
 
-        # Generate keys
+        # Generar llaves
         private_key, public_key = generate_keys()
 
-        # Save in the database
+        # Guardar las llaves en base de datos (solo la llave publica)
         user_data = {
             "username": user.username,
             "public_key": public_key
@@ -234,7 +207,7 @@ def generate_keys_for_user(user: UserModel, authorization: Optional[str] = Heade
 
         users_collection.insert_one(user_data)
 
-        # Return response with keys and user info
+        # Retornar el usuario y las llaves
         return {
             "username": user.username,
             "private_key": private_key,
@@ -287,7 +260,7 @@ def login_user(user: UserLoginModel):
     if not user.password == db_user['password']:
         raise HTTPException(status_code=400, detail="Credenciales inválidas")
 
-    # Generar
+    # Generar el token y retornarlo
     token = generate_and_assign_token(user)
     full_user = {"username": user.username, "token": token}
     return full_user
