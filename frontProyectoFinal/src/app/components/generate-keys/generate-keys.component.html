@@ -6,6 +6,7 @@
       <strong>Nombre de usuario: </strong>
       <span>{{ username }}</span>
     </div>
+    <input type="text" [(ngModel)]="keyId" placeholder="Ingresa el Key ID" />
     <button (click) = "generarLlaves()">Generar</button>
     <button (click)="downloadPrivateKey()">Descargar Llave Privada</button>
   </div>
@@ -22,5 +23,13 @@
       <br>
       <span>{{ usuario?.publicKey }}</span>
     </div>
+  </div>
+</div>
+
+<div class="modal" *ngIf="keysError">
+  <div class="modal-content">
+    <span class="close" (click)="keysError = null">×</span>
+    <h2>Error de Inicio de Sesión</h2>
+    <p>{{ keysError }}</p>
   </div>
 </div>

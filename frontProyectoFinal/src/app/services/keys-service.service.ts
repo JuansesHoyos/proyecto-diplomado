@@ -15,11 +15,11 @@ export class KeysService {
   constructor(private http: HttpClient) { }
 
   getUsuarios(username: string):Observable<User> {
-    return this.http.get<User>(this.apiUrlBase+this.getFromUser+"/"+username);
+    return this.http.get<User>(this.apiUrlBase+this.getFromUser+"?user="+username);
   }
 
-  generarLlaves(username: string): Observable<User> {
-    const payload = { username };
+  generarLlaves(username: string, identificador: string): Observable<User> {
+    const payload = { username , identificador};
 
     const authToken = localStorage.getItem("jwt_token");
     const headers = new HttpHeaders({

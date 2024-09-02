@@ -3,33 +3,39 @@ import {KeysService} from "../../services/keys-service.service";
 import {User} from "../../class/user";
 import {FormsModule} from "@angular/forms";
 import {JwtHelperService} from "@auth0/angular-jwt";
+import {NgIf} from "@angular/common";
 
 
 @Component({
   selector: 'app-generate-keys',
   standalone: true,
   imports: [
-    FormsModule
+    FormsModule,
+    NgIf
   ],
   templateUrl: './generate-keys.component.html',
   styleUrl: './generate-keys.component.css'
 })
 
 export class GenerateKeysComponent implements OnInit {
+  keyId: string = '';
   username: string = '';
   usuario: User | null = null;
   helper = new JwtHelperService();
+  keysError: string | null = null;
 
   ngOnInit(): void {
     let token = localStorage.getItem('jwt_token');
     let decodeToken;
-    console.log(token)
     if (typeof token === "string") {
       decodeToken = this.helper.decodeToken(token);
-      console.log(decodeToken);
       this.username = decodeToken.name;
-      console.log(this.username);
     }
+    this.keysService.getUsuarios(this.username).subscribe({
+      next: (response: any) => {
+        this.usuario = response;
+      }
+    });
   }
 
   constructor(private keysService: KeysService) { }
@@ -60,19 +66,19 @@ export class GenerateKeysComponent implements OnInit {
 
   generarLlaves(): void {
     const username = this.username;
-    if (username) {
-      this.keysService.generarLlaves(username).subscribe({
+    const identificador = this.keyId;
+    if (identificador) {
+      this.keysService.generarLlaves(username, identificador).subscribe({
         next: (response: any) => {
           this.usuario = new User(response);
 
           console.log("Keys generated successfully", this.usuario);
         },
         error: (err) => {
+          this.keysError = err.error?.detail || 'Error desconocido';
           console.error("Error generating keys", err);
         }
       });
     }
   }
-
-  protected readonly User = User;
 }

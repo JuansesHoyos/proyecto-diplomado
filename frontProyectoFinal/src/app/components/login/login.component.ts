@@ -35,8 +35,6 @@ export class LoginComponent {
       // Hashear la contraseña
       const hashedPassword = CryptoJS.SHA256(password).toString();
 
-      // Aquí puedes enviar los datos a tu backend
-
       let userLogin = new Login({
         username: username,
         password: hashedPassword,
