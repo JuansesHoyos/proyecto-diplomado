@@ -78,7 +78,6 @@ class UserModel(BaseModel):
     username: str
 
 
-
 class UserResponse(BaseModel):
     username: str
     publicKey: str
@@ -140,11 +139,25 @@ def generate_and_assign_token(user: UserLoginModel):
     signeduser = generate_token(token_data)
     return signeduser
 
-
+"""
+           jwt: str | bytes,
+           key: RSAPublicKey | EllipticCurvePublicKey | Ed25519PublicKey | Ed448PublicKey | PyJWK | str | bytes = "",
+           algorithms: list[str] | None = None,
+           options: dict[str, Any] | None = None,
+           verify: bool | None = None,
+           detached_payload: bytes | None = None,
+           audience: str | Iterable[str] | None = None,
+           issuer: str | list[str] | None = None,
+           leeway: float | timedelta = 0,
+           **kwargs: Any) -> Any
+"""
 # Función para verificar JWT
-def verify_token(user: UserModel):
+def verify_token(token: str):
     try:
-        payload = jwt.decode(user, SECRET_KEY, algorithms=[ALGORITHM])
+        print("Pre payload")
+        print(token)
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM], audience=AUDIENCE, issuer=ISSUER)
+        print("POST payload")
         # Extract claims
         username: str = payload.get("sub")
         iss: str = payload.get("iss")
@@ -154,26 +167,32 @@ def verify_token(user: UserModel):
 
         # Validate claims
         if username is None:
+            print("1")
             raise HTTPException(status_code=403, detail="Nombre de usuario no válido")
 
         if iss is None or iss != ISSUER:
+            print("2")
             raise HTTPException(status_code=403, detail="Issuer no válido")
 
         current_time = datetime.now(timezone.utc).timestamp()
         if exp is None or exp <= current_time:
+            print("3")
             raise HTTPException(status_code=403, detail="Token expirado")
 
         if nbf is None or nbf >= current_time:
+            print("4")
             raise HTTPException(status_code=403, detail="Token no válido aún")
 
         if aud is None or aud != AUDIENCE:
+            print("5")
             raise HTTPException(status_code=403, detail="La audiencia no es valida")
-            return True
+        return True
 
     except HTTPException:
         raise HTTPException(status_code=403, detail="Token inválido")
 
-    except Exception:
+    except Exception as e:
+        print("Exception", e)
         raise HTTPException(status_code=403, detail="Error inesperado")
 
 
@@ -191,26 +210,37 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
 # RUTAS CONSUMIBLES
 # Ruta para generar y guardar claves
 @app.post("/generate-keys/")
-def generate_keys_for_user(user: UserModel):
+def generate_keys_for_user(user: UserModel, authorization: Optional[str] = Header(None)):
     try:
-        if verify_token(user):
-            # Generar claves
-            private_key, public_key = generate_keys()
+        # Check if Authorization header exists
+        if authorization is None:
+            raise HTTPException(status_code=401, detail="Authorization header missing")
 
-            # Guardar en la base de datos
-            user_data = {
-                "username": user.username,
-                "public_key": public_key
-            }
+        # Extract the token from the Authorization header (Bearer <token>)
+        token = authorization.split(" ")[1] if " " in authorization else authorization
 
-            users_collection.insert_one(user_data)
+        # Verify the token
+        if not verify_token(token):
+            raise HTTPException(status_code=401, detail="Invalid token")
 
-            # Retornar respuesta con las claves y el usuario
-            return {
-                "username": user.username,
-                "private_key": private_key,
-                "public_key": public_key
-            }
+        # Generate keys
+        private_key, public_key = generate_keys()
+
+        # Save in the database
+        user_data = {
+            "username": user.username,
+            "public_key": public_key
+        }
+
+        users_collection.insert_one(user_data)
+
+        # Return response with keys and user info
+        return {
+            "username": user.username,
+            "private_key": private_key,
+            "public_key": public_key
+        }
+
     except HTTPException as e:
         raise e
     except Exception as e:
