@@ -7,6 +7,7 @@ from cryptography.hazmat.primitives.asymmetric import rsa
 from fastapi import FastAPI, HTTPException, Header
 from fastapi.security import HTTPBearer
 import jwt
+from jwt import ExpiredSignatureError
 from pydantic import BaseModel
 from pymongo import MongoClient
 from starlette.middleware.cors import CORSMiddleware
@@ -45,7 +46,7 @@ MFV8I5IrbXSZzqsvKr80rQWNc2b+5BgsOxNQ2J+xpu5NWL20bueAZwusTShRtLL6
 D+m1G7AJ0RJgilf4cghcMYYOBL3AGXPdAgFaCSOoSL9S27E5aoO+
 """
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+ACCESS_TOKEN_EXPIRE_MINUTES = 120
 ISSUER = "DavidJuanJuanAndres"
 AUDIENCE = "Proyecto Diplomado"
 
@@ -81,12 +82,18 @@ class UserModel(BaseModel):
 class UserResponse(BaseModel):
     username: str
     publicKey: str
+    identificador: str
 
 
 class UserLoginModel(BaseModel):
     username: str
     password: Optional[str]
     token: Optional[str] = None
+
+
+class GenerateKeysInput(BaseModel):
+    username: str
+    identificador: str
 
 
 # Funciones
@@ -163,9 +170,11 @@ def verify_token(token: str):
 
     except HTTPException:
         raise HTTPException(status_code=403, detail="Token inválido")
+    except ExpiredSignatureError:
+        raise HTTPException(status_code=403, detail="Token expirado")
 
     except Exception as e:
-        print("Exception", e)
+        print("Exception", type(e))
         raise HTTPException(status_code=403, detail="Error inesperado")
 
 
@@ -183,7 +192,7 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
 # RUTAS CONSUMIBLES
 # Ruta para generar y guardar claves
 @app.post("/generate-keys/")
-def generate_keys_for_user(user: UserModel, authorization: Optional[str] = Header(None)):
+def generate_keys_for_user(input: GenerateKeysInput, authorization: Optional[str] = Header(None)):
     try:
         # Se revisa si el token viene en el header de la petición
         if authorization is None:
@@ -201,15 +210,16 @@ def generate_keys_for_user(user: UserModel, authorization: Optional[str] = Heade
 
         # Guardar las llaves en base de datos (solo la llave publica)
         user_data = {
-            "username": user.username,
-            "public_key": public_key
+            "username": input.username,
+            "public_key": public_key,
+            "identificador": input.username + input.identificador
         }
 
         users_collection.insert_one(user_data)
 
         # Retornar el usuario y las llaves
         return {
-            "username": user.username,
+            "username": input.username,
             "private_key": private_key,
             "public_key": public_key
         }
@@ -224,9 +234,13 @@ def generate_keys_for_user(user: UserModel, authorization: Optional[str] = Heade
 def get_public_key(user: str):
     userfinal = users_collection.find_one({"username": user})
     print(userfinal)
+    username = userfinal["username"]
+    id_llave = userfinal["identificador"].replace(username, "")
     return UserResponse(
-        username=userfinal["username"],
-        publicKey=userfinal["public_key"]
+        identificador=id_llave,
+        username=username,
+        publicKey=userfinal["public_key"],
+        privateKey="¡Por seguridad, la llave privada no se almacena en el sistema!"
     )
 
 
