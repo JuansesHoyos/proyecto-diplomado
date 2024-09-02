@@ -1,10 +1,13 @@
 import os
 from datetime import timedelta, datetime, timezone
 from typing import Optional
+
+import gridfs
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
-from fastapi import FastAPI, HTTPException, Header
+from fastapi import FastAPI, HTTPException, Header, File, UploadFile, Depends
+from fastapi.encoders import jsonable_encoder
 from fastapi.security import HTTPBearer
 import jwt
 from jwt import ExpiredSignatureError
@@ -14,6 +17,7 @@ from starlette.middleware.cors import CORSMiddleware
 
 from fastapi import Depends
 from fastapi.security import OAuth2PasswordBearer
+from starlette.responses import JSONResponse
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
@@ -63,6 +67,7 @@ login_collection = db['Login']
 
 # Definición de la aplicación FastAPI
 app = FastAPI()
+fs = gridfs.GridFS(db)
 
 # Configuración de CORS
 app.add_middleware(
@@ -278,6 +283,62 @@ def login_user(user: UserLoginModel):
     token = generate_and_assign_token(user)
     full_user = {"username": user.username, "token": token}
     return full_user
+
+
+@app.get("/getKeys")
+def get_user_keys(user: str, authorization: Optional[str] = Header(None)):
+    try:
+        # Se revisa si el token viene en el header de la petición
+        if authorization is None:
+            raise HTTPException(status_code=401, detail="Authorization header missing")
+        # Se extrae el token limpio sin el bearer
+        token = authorization.split(" ")[1] if " " in authorization else authorization
+        # Verificar el token
+        if not verify_token(token):
+            raise HTTPException(status_code=401, detail="Invalid token")
+
+        # Buscar las llaves del usuario en la base de datos
+        llaves_cursor = users_collection.find({"username": user})
+        llaves_list = list(llaves_cursor)
+
+        # Convertir cada documento a una instancia de UserResponse
+        llaves_serializable = [
+            UserResponse(
+                username=doc["username"],
+                publicKey=doc["public_key"],
+                identificador=doc["identificador"]
+            )
+            for doc in llaves_list
+        ]
+
+        # Convertir a JSON serializable
+        return jsonable_encoder(llaves_serializable)
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/upload-file/")
+async def upload_file(file: UploadFile = File(...), description: Optional[str] = None):
+    try:
+        # Leer el contenido del archivo
+        file_content = await file.read()
+
+        # Guardar el archivo en GridFS
+        file_id = fs.put(file_content, filename=file.filename, description=description)
+
+        # Crear una respuesta
+        response = {
+            "file_id": str(file_id),
+            "filename": file.filename,
+            "description": description,
+        }
+
+        return JSONResponse(content=jsonable_encoder(response), status_code=200)
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error al subir el archivo: {str(e)}")
 
 
 @app.get("/")
