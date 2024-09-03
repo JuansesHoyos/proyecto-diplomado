@@ -1,5 +1,18 @@
 services:
 
+  firewall:
+    image: nginx:alpine
+    container_name: firewall
+    ports:
+      - "8080:80" # Único puerto expuesto  
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - backend
+      - frontend
+    networks:
+      - app_net
+
   backend:
     build:
       context: ./apidiplomadoFinal

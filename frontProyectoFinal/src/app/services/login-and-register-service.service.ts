@@ -10,7 +10,7 @@ export class LoginAndRegisterServiceService {
 
   constructor(private http: HttpClient) { }
 
-  private apiUrlBase = 'http://127.0.0.1:8000/';
+  private apiUrlBase = 'http://localhost:8080/api/';
   private register = 'register/';
   private login = 'login/';
 
