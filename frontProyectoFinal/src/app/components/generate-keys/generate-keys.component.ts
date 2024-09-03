@@ -3,7 +3,7 @@ import {KeysService} from "../../services/keys-service.service";
 import {User} from "../../class/user";
 import {FormsModule} from "@angular/forms";
 import {JwtHelperService} from "@auth0/angular-jwt";
-import {NgIf} from "@angular/common";
+import {NgForOf, NgIf} from "@angular/common";
 
 
 @Component({
@@ -11,7 +11,8 @@ import {NgIf} from "@angular/common";
   standalone: true,
   imports: [
     FormsModule,
-    NgIf
+    NgIf,
+    NgForOf
   ],
   templateUrl: './generate-keys.component.html',
   styleUrl: './generate-keys.component.css'
@@ -23,6 +24,7 @@ export class GenerateKeysComponent implements OnInit {
   usuario: User | null = null;
   helper = new JwtHelperService();
   keysError: string | null = null;
+  keys: User[] = [];
 
   ngOnInit(): void {
     let token = localStorage.getItem('jwt_token');
@@ -31,11 +33,11 @@ export class GenerateKeysComponent implements OnInit {
       decodeToken = this.helper.decodeToken(token);
       this.username = decodeToken.name;
     }
-    this.keysService.getUsuarios(this.username).subscribe({
+    this.keysService.getKeysFromUser(this.username).subscribe({
       next: (response: any) => {
-        this.usuario = response;
+        this.keys = response;
       }
-    });
+    })
   }
 
   constructor(private keysService: KeysService) { }
@@ -49,7 +51,6 @@ export class GenerateKeysComponent implements OnInit {
     if (data != undefined){
       let blob = new Blob([data.toString()], { type: 'text/plain' });
       const url= window.URL.createObjectURL(blob);
-
 
       // Crear un enlace para forzar la descarga
       const a = document.createElement('a');
@@ -66,7 +67,7 @@ export class GenerateKeysComponent implements OnInit {
 
   generarLlaves(): void {
     const username = this.username;
-    const identificador = this.keyId;
+    const identificador = this.keyId.trim();
     if (identificador) {
       this.keysService.generarLlaves(username, identificador).subscribe({
         next: (response: any) => {
@@ -79,6 +80,11 @@ export class GenerateKeysComponent implements OnInit {
           console.error("Error generating keys", err);
         }
       });
+      this.keysService.getKeysFromUser(this.username).subscribe({
+        next: (response: any) => {
+          this.keys = response;
+        }
+      })
     }
   }
 }

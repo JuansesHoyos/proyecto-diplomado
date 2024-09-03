@@ -64,6 +64,7 @@ client = MongoClient(dburl)
 db = client["pruebaDB"]
 users_collection = db['Usuario']
 login_collection = db['Login']
+docs_collection = db['Documentos']
 
 # Definición de la aplicación FastAPI
 app = FastAPI()
@@ -99,6 +100,13 @@ class UserLoginModel(BaseModel):
 class GenerateKeysInput(BaseModel):
     username: str
     identificador: str
+
+
+class FileInput(BaseModel):
+    doc: str
+    owner: str
+    shared: str
+    signatures: str
 
 
 # Funciones
@@ -320,23 +328,21 @@ def get_user_keys(user: str, authorization: Optional[str] = Header(None)):
 
 
 @app.post("/upload-file/")
-async def upload_file(file: UploadFile = File(...), description: Optional[str] = None):
+async def upload_file(file: FileInput, authorization: Optional[str] = Header(None)):
     try:
-        # Leer el contenido del archivo
-        file_content = await file.read()
+        # Se revisa si el token viene en el header de la petición
+        if authorization is None:
+            raise HTTPException(status_code=401, detail="Authorization header missing")
+        # Se extrae el token limpio sin el bearer
+        token = authorization.split(" ")[1] if " " in authorization else authorization
+        # Verificar el token
+        if not verify_token(token):
+            raise HTTPException(status_code=401, detail="Invalid token")
 
-        # Guardar el archivo en GridFS
-        file_id = fs.put(file_content, filename=file.filename, description=description)
+        docs_collection.insert_one({})
 
-        # Crear una respuesta
-        response = {
-            "file_id": str(file_id),
-            "filename": file.filename,
-            "description": description,
-        }
-
-        return JSONResponse(content=jsonable_encoder(response), status_code=200)
-
+    except HTTPException as e:
+        raise e
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error al subir el archivo: {str(e)}")
 
