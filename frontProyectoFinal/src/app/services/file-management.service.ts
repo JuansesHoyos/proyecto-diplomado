@@ -1,5 +1,7 @@
 import { Injectable } from '@angular/core';
-import {HttpClient} from "@angular/common/http";
+import {HttpClient, HttpHeaders} from "@angular/common/http";
+import {Doc} from "../class/doc";
+import {User} from "../class/user";
 
 @Injectable({
   providedIn: 'root'
@@ -10,7 +12,19 @@ export class FileManagementService {
   private uploadFile = 'upload-file/'
   constructor(private http: HttpClient) { }
 
-  subirArchivo(file: File){
-    return this.http.post(this.apiUrlBase+this.uploadFile, file);
+  subirArchivo(document: Doc){
+    console.log("cosa 1", document.document);
+    let payload = {"doc": document.document, "owner": document.owner}
+    console.log("cosa2",document.document);
+
+    const authToken = localStorage.getItem("jwt_token");
+    const headers = new HttpHeaders({
+      Authorization: `Bearer ${authToken}`,
+    });
+    return this.http.post<User>(
+      `${this.apiUrlBase}${this.uploadFile}`,
+      payload,
+      { headers }
+    );
   }
 }
