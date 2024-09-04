@@ -5,8 +5,6 @@ db = db.getSiblingDB('pruebaDB');
    db.createCollection('Firma');
    db.createCollection('Documento');
   
-   db.Usuario.createIndex({ "user_id": 1 }, { unique: true });
-   db.Login.createIndex({ "login_id": 1 }, { unique: true });
 
    // Insertar un documento en cada colección para asegurar su creación
    db.Usuario.insertOne({ user_id: "init", username: "init_user" });
