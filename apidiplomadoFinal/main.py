@@ -1,23 +1,19 @@
 import os
+import jwt
 from datetime import timedelta, datetime, timezone
 from typing import Optional
-
-import gridfs
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
-from fastapi import FastAPI, HTTPException, Header, File, UploadFile, Depends
+from fastapi import Depends
+from fastapi import FastAPI, HTTPException, Header
 from fastapi.encoders import jsonable_encoder
 from fastapi.security import HTTPBearer
-import jwt
+from fastapi.security import OAuth2PasswordBearer
 from jwt import ExpiredSignatureError
 from pydantic import BaseModel
 from pymongo import MongoClient
 from starlette.middleware.cors import CORSMiddleware
-
-from fastapi import Depends
-from fastapi.security import OAuth2PasswordBearer
-from starlette.responses import JSONResponse
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
@@ -58,8 +54,8 @@ AUDIENCE = "Proyecto Diplomado"
 security = HTTPBearer()
 
 # Conexión a MongoDB
-#dburl = os.getenv('MONGO_URL', 'mongodb://localhost:27017/pruebaDB')
-dburl = os.getenv('MONGO_URL', 'mongodb://persistencia:27017/pruebaDB')
+dburl = os.getenv('MONGO_URL', 'mongodb://localhost:27017/pruebaDB')
+# dburl = os.getenv('MONGO_URL', 'mongodb://persistencia:27017/pruebaDB')
 client = MongoClient(dburl)
 db = client["pruebaDB"]
 users_collection = db['Usuario']
@@ -68,7 +64,6 @@ docs_collection = db['Documentos']
 
 # Definición de la aplicación FastAPI
 app = FastAPI()
-fs = gridfs.GridFS(db)
 
 # Configuración de CORS
 app.add_middleware(
@@ -103,10 +98,11 @@ class GenerateKeysInput(BaseModel):
 
 
 class FileInput(BaseModel):
+    _id: Optional[str]
     doc: str
     owner: str
-    shared: str
-    signatures: str
+    shared: Optional[str]
+    signatures: Optional[str]
 
 
 # Funciones
@@ -202,6 +198,23 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
         raise HTTPException(status_code=401, detail="Token inválido o expirado")
 
 
+def probe_tokens(authorization: str):
+    try:
+        # Se revisa si el token viene en el header de la petición
+        if authorization is None:
+            raise HTTPException(status_code=401, detail="Authorization header missing")
+        # Se extrae el token limpio sin el bearer
+        token = authorization.split(" ")[1] if " " in authorization else authorization
+        # Verificar el token
+        if not verify_token(token):
+            raise HTTPException(status_code=401, detail="Invalid token")
+
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail={str(e)})
+
+
 # RUTAS CONSUMIBLES
 # Ruta para generar y guardar claves
 @app.post("/generate-keys/")
@@ -246,7 +259,6 @@ def generate_keys_for_user(input: GenerateKeysInput, authorization: Optional[str
 @app.get("/getPublicKey/")
 def get_public_key(user: str):
     userfinal = users_collection.find_one({"username": user})
-    print(userfinal)
     username = userfinal["username"]
     id_llave = userfinal["identificador"].replace(username, "")
     return UserResponse(
@@ -328,23 +340,42 @@ def get_user_keys(user: str, authorization: Optional[str] = Header(None)):
 
 
 @app.post("/upload-file/")
-async def upload_file(file: FileInput, authorization: Optional[str] = Header(None)):
-    try:
-        # Se revisa si el token viene en el header de la petición
-        if authorization is None:
-            raise HTTPException(status_code=401, detail="Authorization header missing")
-        # Se extrae el token limpio sin el bearer
-        token = authorization.split(" ")[1] if " " in authorization else authorization
-        # Verificar el token
-        if not verify_token(token):
-            raise HTTPException(status_code=401, detail="Invalid token")
+def upload_file(file: FileInput, authorization: Optional[str] = Header(None)):
+    probe_tokens(authorization)
 
-        docs_collection.insert_one({})
+    if file.doc:
+        file_data = {
+            "doc": file.doc,
+            "owner": file.owner,
+            "shared": file.shared,
+            "signatures": file.signatures
+        }
+        docs_collection.insert_one(file_data)
 
-    except HTTPException as e:
-        raise e
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error al subir el archivo: {str(e)}")
+        return {"message": "Archivo cargado correctamente"}
+    else:
+        raise HTTPException(status_code=500, detail="Documento vacio")
+
+@app.get("/get_files_from_owner")
+def get_files_from_owner(owner: str, authorization: Optional[str] = Header(None)):
+    probe_tokens(authorization)
+    finded_docs = docs_collection.find({"owner": owner})
+
+    docs_list = list(finded_docs)
+
+    docs_serializable = [
+        FileInput(
+            _id=doc["_id"],
+            doc=doc["doc"],
+            owner=doc["owner"],
+            shared=doc["shared"],
+            signatures=doc["signatures"]
+        )
+        for doc in docs_list
+    ]
+
+    # Convertir a JSON serializable
+    return jsonable_encoder(docs_serializable)
 
 
 @app.get("/")

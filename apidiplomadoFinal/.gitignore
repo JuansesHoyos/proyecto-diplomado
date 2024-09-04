@@ -1,0 +1,9 @@
+#IGNORAR CARPETAS
+
+/.angular/
+/.vscode/
+/dist/
+/node_modules/
+/venv/
+/.venv/
+/.idea/
