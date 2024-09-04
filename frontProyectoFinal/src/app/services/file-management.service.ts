@@ -12,10 +12,8 @@ export class FileManagementService {
   private uploadFile = 'upload-file/'
   constructor(private http: HttpClient) { }
 
-  subirArchivo(document: Doc){
-    console.log("cosa 1", document.document);
-    let payload = {"doc": document.document, "owner": document.owner}
-    console.log("cosa2",document.document);
+  subirArchivo(b64: string,document: Doc){
+    let payload = {"doc": b64, "owner": document.owner}
 
     const authToken = localStorage.getItem("jwt_token");
     const headers = new HttpHeaders({

@@ -19,72 +19,46 @@ export class FileManagementComponent {
   selectedFile: File | null = null;
   helper = new JwtHelperService();
   username: string = '';
-
-
+  encryptedFile: string = '';
 
   constructor(private filesService: FileManagementService) { }
 
   onFileSelected(event: Event): void {
-
     const input = event.target as HTMLInputElement;
-
-
     if (input.files) {
         this.selectedFile = input.files[0];
     }
-
-
   }
 
-   uploadFiles(): void {
-    console.log(this.selectedFile)
-
+  uploadFiles(): void {
     if (this.selectedFile) {
-      //let fileB64 =  this.toBase64(this.selectedFile)
-      let cosatemp = "";
-      this.toBase64(this.selectedFile).then(base64String => {
-        cosatemp = base64String;
-        console.log("Base64 String:", base64String);
-      }).catch(error => {
-        console.error("Error:", error);
-      });
-
-
-
-      let token = localStorage.getItem('jwt_token');
-      let decodeToken;
-      if (typeof token === "string") {
-        decodeToken = this.helper.decodeToken(token);
-        this.username = decodeToken.name;
-      }
-      console.log("fileB64",cosatemp)
-      let userDocument = new Doc({
-        document: cosatemp,
-        owner: this.username,
-      })
-      console.log("Doc", userDocument.document)
-      this.filesService.subirArchivo(userDocument).subscribe();
-
-    }
-  }
-
-  toBase64(file: File): Promise<string> {
-    return new Promise((resolve, reject) => {
       const reader = new FileReader();
-      reader.readAsDataURL(file);
+
+      reader.readAsDataURL(this.selectedFile);
       reader.onload = () => {
         const base64String = (reader.result as string).split(',')[1];
-        resolve(base64String);
-        console.log("base64String", base64String)
+
+        let token = localStorage.getItem('jwt_token');
+        let decodeToken;
+
+        if (typeof token === "string") {
+          decodeToken = this.helper.decodeToken(token);
+          this.username = decodeToken.name;
+        }
+
+        let userDocument = new Doc({
+          document: base64String,
+          owner: this.username,
+        });
+
+        this.filesService.subirArchivo(base64String, userDocument).subscribe();
       };
 
-      reader.onerror = error => reject(error);
-    });
+      reader.onerror = (error) => {
+        console.error("Error converting file to Base64", error);
+      };
+    }
   }
-
-
-
-
 
   openPopup(file: File): void {
     this.selectedFile = file;
