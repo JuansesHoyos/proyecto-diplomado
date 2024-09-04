@@ -42,3 +42,31 @@ div [class='form'] {
 .buttons{
   margin : 15px;
 }
+
+
+.container, generated-keys{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.form, .keys {
+  width: 100%;
+  max-width: 600px;
+  margin: 20px 0;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th, td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: center;
+}
+
+th {
+  background-color: #f2f2f2;
+}

@@ -10,12 +10,13 @@ export class KeysService {
 
   private apiUrlBase = 'http://127.0.0.1:8000/';
   private apiGenerateKeys = 'generate-keys/'
-  private getFromUser = 'getPublicKey/'
+  private getFromUser = 'getPublicKey/?user='
+  private getKeys = 'getKeys/?user=';
 
   constructor(private http: HttpClient) { }
 
   getUsuarios(username: string):Observable<User> {
-    return this.http.get<User>(this.apiUrlBase+this.getFromUser+"?user="+username);
+    return this.http.get<User>(this.apiUrlBase+this.getFromUser+username);
   }
 
   generarLlaves(username: string, identificador: string): Observable<User> {
@@ -31,5 +32,15 @@ export class KeysService {
       payload,
       { headers }
     );
+  }
+
+  getKeysFromUser(username: string): Observable<User[]> {
+    const authToken = localStorage.getItem("jwt_token");
+    const headers = new HttpHeaders({
+      Authorization: `Bearer ${authToken}`,
+    });
+    console.log(this.http.get(this.apiUrlBase+this.getKeys+username))
+    // @ts-ignore
+    return this.http.get(this.apiUrlBase+this.getKeys+username, {headers})
   }
 }

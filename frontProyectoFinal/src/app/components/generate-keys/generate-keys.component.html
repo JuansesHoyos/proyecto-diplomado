@@ -26,6 +26,28 @@
   </div>
 </div>
 
+
+
+<div class="generated-keys">
+  <h2>Llaves Generadas</h2>
+  <table>
+    <thead>
+    <tr>
+      <th>Key ID</th>
+      <th>Llave Pública</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr *ngFor="let key of keys">
+      <td>{{ key.identificador }}</td>
+      <td>{{ key.publicKey }}</td>
+    </tr>
+    </tbody>
+  </table>
+</div>
+
+
+
 <div class="modal" *ngIf="keysError">
   <div class="modal-content">
     <span class="close" (click)="keysError = null">×</span>
@@ -33,3 +55,6 @@
     <p>{{ keysError }}</p>
   </div>
 </div>
+
+
+
