@@ -98,11 +98,11 @@ class GenerateKeysInput(BaseModel):
 
 
 class FileInput(BaseModel):
-    _id: Optional[str]
+    _id: Optional[str] = ""
     doc: str
     owner: str
-    shared: Optional[str]
-    signatures: Optional[str]
+    shared: Optional[str] = ""
+    signatures: Optional[str] = ""
 
 
 # Funciones
@@ -326,7 +326,7 @@ def get_user_keys(user: str, authorization: Optional[str] = Header(None)):
             UserResponse(
                 username=doc["username"],
                 publicKey=doc["public_key"],
-                identificador=doc["identificador"]
+                identificador=(doc["identificador"].replace(doc["username"], ""))
             )
             for doc in llaves_list
         ]
@@ -334,8 +334,10 @@ def get_user_keys(user: str, authorization: Optional[str] = Header(None)):
         # Convertir a JSON serializable
         return jsonable_encoder(llaves_serializable)
     except HTTPException as e:
+        print(e)
         raise e
     except Exception as e:
+        print(e)
         raise HTTPException(status_code=500, detail=str(e))
 
 
