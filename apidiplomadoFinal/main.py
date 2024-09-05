@@ -2,6 +2,8 @@ import os
 import jwt
 from datetime import timedelta, datetime, timezone
 from typing import Optional
+
+from bson import ObjectId
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
@@ -60,7 +62,7 @@ client = MongoClient(dburl)
 db = client["pruebaDB"]
 users_collection = db['Usuario']
 login_collection = db['Login']
-docs_collection = db['Documentos']
+docs_collection = db['Documento']
 
 # Definición de la aplicación FastAPI
 app = FastAPI()
@@ -98,7 +100,8 @@ class GenerateKeysInput(BaseModel):
 
 
 class FileInput(BaseModel):
-    _id: Optional[str] = ""
+    id: Optional[str] = ""
+    name: str
     doc: str
     owner: str
     shared: Optional[str] = ""
@@ -348,6 +351,7 @@ def upload_file(file: FileInput, authorization: Optional[str] = Header(None)):
     if file.doc:
         file_data = {
             "doc": file.doc,
+            "name": file.name,
             "owner": file.owner,
             "shared": file.shared,
             "signatures": file.signatures
@@ -358,7 +362,7 @@ def upload_file(file: FileInput, authorization: Optional[str] = Header(None)):
     else:
         raise HTTPException(status_code=500, detail="Documento vacio")
 
-@app.get("/get_files_from_owner")
+@app.get("/get_files_from_owner/")
 def get_files_from_owner(owner: str, authorization: Optional[str] = Header(None)):
     probe_tokens(authorization)
     finded_docs = docs_collection.find({"owner": owner})
@@ -367,7 +371,8 @@ def get_files_from_owner(owner: str, authorization: Optional[str] = Header(None)
 
     docs_serializable = [
         FileInput(
-            _id=doc["_id"],
+            id=str(doc["_id"]),
+            name= doc["name"],
             doc=doc["doc"],
             owner=doc["owner"],
             shared=doc["shared"],
@@ -378,6 +383,12 @@ def get_files_from_owner(owner: str, authorization: Optional[str] = Header(None)
 
     # Convertir a JSON serializable
     return jsonable_encoder(docs_serializable)
+
+@app.get("/delete_files_from_owner/")
+def delete_files_from_owner(documentid: str, authorization: Optional[str] = Header(None)):
+    probe_tokens(authorization)
+    docs_collection.delete_one({"_id": ObjectId(documentid)})
+    return {"message": "Archivo deleteado correctamente"}
 
 
 @app.get("/")

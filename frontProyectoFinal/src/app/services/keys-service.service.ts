@@ -39,7 +39,6 @@ export class KeysService {
     const headers = new HttpHeaders({
       Authorization: `Bearer ${authToken}`,
     });
-    console.log(this.http.get(this.apiUrlBase+this.getKeys+username))
     // @ts-ignore
     return this.http.get(this.apiUrlBase+this.getKeys+username, {headers})
   }

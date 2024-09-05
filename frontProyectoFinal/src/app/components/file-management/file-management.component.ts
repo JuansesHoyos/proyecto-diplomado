@@ -1,4 +1,4 @@
-import {Component} from '@angular/core';
+import {Component, OnInit} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {FileManagementService} from "../../services/file-management.service";
 import {Doc} from "../../class/doc";
@@ -12,17 +12,30 @@ import {JwtHelperService} from "@auth0/angular-jwt";
   templateUrl: './file-management.component.html',
   styleUrls: ['./file-management.component.css']
 })
-export class FileManagementComponent {
+export class FileManagementComponent implements OnInit{
 
-  files: File[] = [];
+  files: Doc[] = [];
   isPopupOpen = false;
   selectedFile: File | null = null;
   helper = new JwtHelperService();
   username: string = '';
-  encryptedFile: string = '';
+  shared: string[] = [];
+  sharedWithMe: string[] = [];
 
+  ngOnInit(): void {
+    let token = localStorage.getItem('jwt_token');
+    let decodeToken;
+    if (typeof token === "string") {
+      decodeToken = this.helper.decodeToken(token);
+      this.username = decodeToken.name;
+    }
+    this.filesService.getFilesFromUser(this.username).subscribe({
+      next: (response: any) => {
+        this.files = response;
+      }
+    })
 
-
+  }
 
   constructor(private filesService: FileManagementService) { }
 
@@ -36,8 +49,6 @@ export class FileManagementComponent {
   uploadFiles(): void {
     if (this.selectedFile) {
       const reader = new FileReader();
-      //cargar el archivo en la tabla
-      this.files.push(this.selectedFile);
 
       reader.readAsDataURL(this.selectedFile);
       reader.onload = () => {
@@ -51,12 +62,21 @@ export class FileManagementComponent {
           this.username = decodeToken.name;
         }
 
+
         let userDocument = new Doc({
           document: base64String,
+          // @ts-ignore
+          name: this.selectedFile.name,
           owner: this.username,
         });
 
         this.filesService.subirArchivo(base64String, userDocument).subscribe();
+
+        this.filesService.getFilesFromUser(this.username).subscribe({
+          next: (response: any) => {
+            this.files = response;
+          }
+        });
       };
 
       reader.onerror = (error) => {
@@ -65,9 +85,9 @@ export class FileManagementComponent {
     }
   }
 
-  openPopup(file: File): void {
-    this.selectedFile = file;
+  openPopup(shareds: string): void {
     this.isPopupOpen = true;
+    this.shared = shareds.split("{<#-#>}")
   }
 
   closePopup(): void {
@@ -89,6 +109,19 @@ export class FileManagementComponent {
 
   signFile(): void {
     console.log('Archivo firmado:');
+  }
+
+  deleteFile(documentId: string): void{
+    this.filesService.deleteFile(documentId).subscribe({
+      next: () => {
+        this.filesService.getFilesFromUser(this.username).subscribe({
+          next: (response: any) => {
+            this.files = response;
+          }
+        });
+      }
+    });
+
   }
 
 
