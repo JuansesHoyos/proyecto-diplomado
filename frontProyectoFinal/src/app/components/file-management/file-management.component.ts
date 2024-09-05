@@ -21,6 +21,9 @@ export class FileManagementComponent {
   username: string = '';
   encryptedFile: string = '';
 
+
+
+
   constructor(private filesService: FileManagementService) { }
 
   onFileSelected(event: Event): void {
@@ -33,6 +36,8 @@ export class FileManagementComponent {
   uploadFiles(): void {
     if (this.selectedFile) {
       const reader = new FileReader();
+      //cargar el archivo en la tabla
+      this.files.push(this.selectedFile);
 
       reader.readAsDataURL(this.selectedFile);
       reader.onload = () => {
