@@ -109,6 +109,11 @@ class FileInput(BaseModel):
     signatures: Optional[str] = ""
 
 
+class ShareWith(BaseModel):
+    documentid: str = ""
+    new_share: str = ""
+
+
 # Funciones
 # Función para generar llaves RSA
 def generate_keys():
@@ -395,38 +400,42 @@ def delete_files_from_owner(documentid: str, authorization: Optional[str] = Head
 
 
 @app.post("/share_document/")
-def share_to_user(documentid: str, new_share: str, authorization: Optional[str] = Header(None)):
+def share_to_user(shareWith: ShareWith, authorization: Optional[str] = Header(None)):
     separator = "{<#-#>}"
     probe_tokens(authorization)
 
-    doc = docs_collection.find({"_id": ObjectId(documentid)})
+    doc = docs_collection.find_one({"_id": ObjectId(shareWith.documentid)})
 
     shareds_from_document = doc["shared"]
     shared_list = shareds_from_document.split(separator)
-    if new_share in shared_list:
+    if shareWith.new_share in shared_list:
         return {"message": "El ususario ya tiene acceso al archivo"}
     else:
-        new_shareds = shareds_from_document + separator + new_share
-        docs_collection.update_one({"_id": ObjectId(documentid)}, {"$set": {"shared": new_shareds}})
+        new_shareds = shareds_from_document + shareWith.new_share + separator
+        docs_collection.update_one({"_id": ObjectId(shareWith.documentid)}, {"$set": {"shared": new_shareds}})
         return {"message": "Documento compartido con exito"}
 
 
 @app.get("/get_shareds/")
 def get_shareds(username: str, authorization: Optional[str] = Header(None)):
     probe_tokens(authorization)
-    # Expresión regular que busca el usuario dentro de los caracteres de separación
+
+    # Expresión regular que busca el usuario dentro del campo "shared"
     regex_pattern = re.compile(rf"\{{<#-#>\}}{username}\{{<#-#>\}}")
 
     # Consulta en la colección
     results = docs_collection.find({"shared": regex_pattern})
 
-    # Procesa y muestra los resultados
-    matching_documents = list(results)
+    # Procesa los documentos y convierte los ObjectId a strings
+    matching_documents = []
+    for doc in results:
+        doc["_id"] = str(doc["_id"])  # Convertir ObjectId a string
+        matching_documents.append(doc)
+
     if matching_documents:
-        print(f"El usuario '{username}' se encontró en los siguientes documentos:")
-        for doc in matching_documents:
-            print(doc)
-        return matching_documents
+        return jsonable_encoder(matching_documents)
+    else:
+        return {"message": f"No se encontraron documentos compartidos con '{username}'"}
 
 
 @app.get("/")
