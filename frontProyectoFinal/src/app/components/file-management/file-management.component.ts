@@ -25,8 +25,8 @@ export class FileManagementComponent implements OnInit{
   shareWith = "";
 
   ngOnInit(): void {
-    let token = localStorage.getItem('jwt_token');
     let decodeToken;
+    let token = localStorage.getItem('jwt_token');
     if (typeof token === "string") {
       decodeToken = this.helper.decodeToken(token);
       this.username = decodeToken.name;
@@ -39,9 +39,19 @@ export class FileManagementComponent implements OnInit{
 
     this.filesService.getShareds(this.username).subscribe({
       next: (response: any) => {
-        this.sharedWithMe = response;
+        if (response.message) {
+          this.sharedWithMe = [];
+        } else if (Array.isArray(response)) {
+          this.sharedWithMe = response;
+        } else {
+          this.sharedWithMe = [];
+        }
+      },
+      error: (error) => {
+        console.error('Error al obtener los documentos compartidos:', error);
+        this.sharedWithMe = [];
       }
-    })
+    });
 
   }
 
@@ -104,9 +114,7 @@ export class FileManagementComponent implements OnInit{
   }
 
   shareFile(documentid: string): void {
-    console.log(documentid);
-    console.log(this.filesService.shareWithUser(documentid, this.shareWith).subscribe());
-
+    this.filesService.shareWithUser(documentid, this.shareWith).subscribe();
   }
 
   stopSharing(): void {

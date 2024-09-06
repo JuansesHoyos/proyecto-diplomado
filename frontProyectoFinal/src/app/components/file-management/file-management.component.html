@@ -65,9 +65,9 @@
   </tr>
   </thead>
   <tbody>
-  <tr *ngFor="let file of sharedWithMe">
-    <td>{{ file.name }}</td>
-    <td> {{ file.owner }}</td>
+  <tr *ngFor="let sharedFile of sharedWithMe">
+    <td>{{ sharedFile.name }}</td>
+    <td> {{ sharedFile.owner }}</td>
     <td>
       <button (click)="signFile()">Firmar</button>
     </td>
