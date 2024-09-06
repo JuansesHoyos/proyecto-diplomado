@@ -1,5 +1,5 @@
 <div class="file-upload">
-  <input type="file" (change)="onFileSelected($event)"  />
+  <input type="file" (change)="onFileSelected($event)"/>
   <button (click)="uploadFiles()">Subir Archivos</button>
 </div>
 <h1>Mis Documentos</h1>
@@ -16,10 +16,19 @@
   <tbody>
   <tr *ngFor="let file of files">
     <td>{{ file.name }}</td>
-    <td><button (click)="shareFile()">Compartir</button></td>
-    <td><button (click)="signFile()">Firmar Archivo</button></td>
-    <td><button (click)="openPopup(file.shared)">Ver</button></td>
-    <td><button (click)="deleteFile(file.id)">Eliminar</button></td>
+    <td>
+      <input type="text" placeholder="Ingresa el usuario a compartir" [(ngModel)]="shareWith">
+      <button (click)="shareFile(file.id)">Compartir</button>
+    </td>
+    <td>
+      <button (click)="signFile()">Firmar Archivo</button>
+    </td>
+    <td>
+      <button (click)="openPopup(file.shared)">Ver</button>
+    </td>
+    <td>
+      <button (click)="deleteFile(file.id)">Eliminar</button>
+    </td>
   </tr>
   </tbody>
 </table>
@@ -37,7 +46,9 @@
       <tbody>
       <tr *ngFor="let name of shared">
         <td>{{ name }}</td>
-        <td><button (click)="stopSharing()">Dejar de compartir</button></td>
+        <td>
+          <button (click)="stopSharing()">Dejar de compartir</button>
+        </td>
       </tr>
       </tbody>
     </table>
@@ -54,10 +65,12 @@
   </tr>
   </thead>
   <tbody>
-  <tr *ngFor="let name of sharedWithMe">
-    <td>{{ name }}</td>
-    <td> {{'PROPIETARIO'}}</td>
-    <td><button (click)="signFile()">Firmar</button></td>
+  <tr *ngFor="let file of sharedWithMe">
+    <td>{{ file.name }}</td>
+    <td> {{ file.owner }}</td>
+    <td>
+      <button (click)="signFile()">Firmar</button>
+    </td>
   </tr>
   </tbody>
 </table>

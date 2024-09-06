@@ -3,12 +3,13 @@ import {CommonModule} from '@angular/common';
 import {FileManagementService} from "../../services/file-management.service";
 import {Doc} from "../../class/doc";
 import {JwtHelperService} from "@auth0/angular-jwt";
+import {FormsModule} from "@angular/forms";
 
 
 @Component({
   selector: 'app-file-management',
   standalone: true,
-  imports: [CommonModule], // Importa CommonModule aquí
+  imports: [CommonModule, FormsModule], // Importa CommonModule aquí
   templateUrl: './file-management.component.html',
   styleUrls: ['./file-management.component.css']
 })
@@ -20,7 +21,8 @@ export class FileManagementComponent implements OnInit{
   helper = new JwtHelperService();
   username: string = '';
   shared: string[] = [];
-  sharedWithMe: string[] = [];
+  sharedWithMe: Doc[] = [];
+  shareWith = "";
 
   ngOnInit(): void {
     let token = localStorage.getItem('jwt_token');
@@ -35,6 +37,12 @@ export class FileManagementComponent implements OnInit{
       }
     })
 
+    this.filesService.getShareds(this.username).subscribe({
+      next: (response: any) => {
+        this.sharedWithMe = response;
+      }
+    })
+
   }
 
   constructor(private filesService: FileManagementService) { }
@@ -42,7 +50,7 @@ export class FileManagementComponent implements OnInit{
   onFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     if (input.files) {
-        this.selectedFile = input.files[0];
+      this.selectedFile = input.files[0];
     }
   }
 
@@ -95,11 +103,10 @@ export class FileManagementComponent implements OnInit{
     this.selectedFile = null;
   }
 
-  shareFile(): void {
-    if (this.selectedFile) {
-      console.log('Archivo compartido:', this.selectedFile.name);
-      this.closePopup();
-    }
+  shareFile(documentid: string): void {
+    console.log(documentid);
+    console.log(this.filesService.shareWithUser(documentid, this.shareWith).subscribe());
+
   }
 
   stopSharing(): void {
@@ -123,6 +130,4 @@ export class FileManagementComponent implements OnInit{
     });
 
   }
-
-
 }

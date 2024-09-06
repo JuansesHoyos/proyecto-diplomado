@@ -10,9 +10,11 @@ import {Observable} from "rxjs";
 export class FileManagementService {
 
   private apiUrlBase = 'http://127.0.0.1:8000/';
-  private uploadFile = 'upload-file/'
-  private getFiles = 'get_files_from_owner/?owner='
-  private deleFile = 'delete_files_from_owner/?documentid='
+  private uploadFile = 'upload-file/';
+  private getFiles = 'get_files_from_owner/?owner=';
+  private deleFile = 'delete_files_from_owner/?documentid=';
+  private getSharedsUrl = 'get_shareds/?username=';
+  private shareWith = 'share_document/';
   constructor(private http: HttpClient) { }
 
   subirArchivo(b64: string,document: Doc){
@@ -51,6 +53,29 @@ export class FileManagementService {
     );
   }
 
+  getShareds(username: string): Observable<Doc[]> {
+    const authToken = localStorage.getItem("jwt_token");
+    const headers = new HttpHeaders({
+      Authorization: `Bearer ${authToken}`,
+    });
+    return this.http.get<Doc[]>(
+      this.apiUrlBase+this.getSharedsUrl+username,
+      { headers }
+    );
+  }
 
-
+  shareWithUser(documentid: string, new_share: string): Observable<string> {
+    console.log("documentid",documentid);
+    console.log("new_share",new_share);
+    const authToken = localStorage.getItem("jwt_token");
+    const payload = {documentid, new_share};
+    const headers = new HttpHeaders({
+      Authorization: `Bearer ${authToken}`,
+    });
+    return this.http.post<string>(
+      `${this.apiUrlBase}${this.shareWith}`,
+      payload,
+      { headers }
+    );
+  }
 }
