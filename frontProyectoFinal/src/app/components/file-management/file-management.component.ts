@@ -23,6 +23,7 @@ export class FileManagementComponent implements OnInit{
   shared: string[] = [];
   sharedWithMe: Doc[] = [];
   shareWith = "";
+  privateTempKey = "";
 
   ngOnInit(): void {
     let decodeToken;
@@ -105,7 +106,7 @@ export class FileManagementComponent implements OnInit{
 
   openPopup(shareds: string): void {
     this.isPopupOpen = true;
-    this.shared = shareds.split("{<#-#>}")
+    this.shared = shareds.split("{<#-#>}").filter(value => value.trim() !== "");
   }
 
   closePopup(): void {
@@ -115,15 +116,26 @@ export class FileManagementComponent implements OnInit{
 
   shareFile(documentid: string): void {
     this.filesService.shareWithUser(documentid, this.shareWith).subscribe();
+    this.filesService.getFilesFromUser(this.username).subscribe({
+      next: (response: any) => {
+        this.files = response;
+      }
+    });
   }
 
   stopSharing(): void {
     console.log('Dejar de compartir');
+
+
   }
 
 
-  signFile(): void {
-    console.log('Archivo firmado:');
+  signFile(documentId: string): void {
+    if (this.privateTempKey) {
+      console.log("doc_Id", documentId);
+      this.filesService.signDocument(documentId, this.privateTempKey).subscribe();
+    }
+
   }
 
   deleteFile(documentId: string): void{
@@ -136,6 +148,5 @@ export class FileManagementComponent implements OnInit{
         });
       }
     });
-
   }
 }

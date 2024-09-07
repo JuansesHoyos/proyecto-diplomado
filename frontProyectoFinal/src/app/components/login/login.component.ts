@@ -55,4 +55,8 @@ export class LoginComponent {
       console.log('Formulario no válido');
     }
   }
+
+  logInWithGoogle() {
+
+  }
 }

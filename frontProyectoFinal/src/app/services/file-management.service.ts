@@ -15,6 +15,7 @@ export class FileManagementService {
   private deleFile = 'delete_files_from_owner/?documentid=';
   private getSharedsUrl = 'get_shareds/?username=';
   private shareWith = 'share_document/';
+  private signFile = 'sign_file/';
   constructor(private http: HttpClient) { }
 
   subirArchivo(b64: string,document: Doc){
@@ -65,8 +66,6 @@ export class FileManagementService {
   }
 
   shareWithUser(documentid: string, new_share: string): Observable<string> {
-    console.log("documentid",documentid);
-    console.log("new_share",new_share);
     const authToken = localStorage.getItem("jwt_token");
     const payload = {documentid, new_share};
     const headers = new HttpHeaders({
@@ -74,6 +73,20 @@ export class FileManagementService {
     });
     return this.http.post<string>(
       `${this.apiUrlBase}${this.shareWith}`,
+      payload,
+      { headers }
+    );
+  }
+
+  signDocument(document_id: string, private_key: string): Observable<string> {
+    let payload = {document_id, private_key};
+    console.log(payload);
+    const authToken = localStorage.getItem("jwt_token");
+    const headers = new HttpHeaders({
+      Authorization: `Bearer ${authToken}`,
+    });
+    return this.http.post<string>(
+      `${this.apiUrlBase}${this.signFile}`,
       payload,
       { headers }
     );

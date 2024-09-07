@@ -21,7 +21,8 @@
       <button (click)="shareFile(file.id)">Compartir</button>
     </td>
     <td>
-      <button (click)="signFile()">Firmar Archivo</button>
+      <input type="text" placeholder="Ingresa la llave privada" [(ngModel)]="privateTempKey">
+      <button (click)="signFile(file.id)">Firmar Archivo</button>
     </td>
     <td>
       <button (click)="openPopup(file.shared)">Ver</button>
@@ -40,15 +41,12 @@
       <thead>
       <tr>
         <th>Usuario</th>
-        <th>Gestionar</th>
       </tr>
       </thead>
       <tbody>
       <tr *ngFor="let name of shared">
         <td>{{ name }}</td>
-        <td>
-          <button (click)="stopSharing()">Dejar de compartir</button>
-        </td>
+
       </tr>
       </tbody>
     </table>
@@ -69,7 +67,8 @@
     <td>{{ sharedFile.name }}</td>
     <td> {{ sharedFile.owner }}</td>
     <td>
-      <button (click)="signFile()">Firmar</button>
+      <input type="text" placeholder="Ingresa la llave privada" [(ngModel)]="privateTempKey">
+      <button (click)="signFile(sharedFile.id)">Firmar</button>
     </td>
   </tr>
   </tbody>

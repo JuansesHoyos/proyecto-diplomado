@@ -72,19 +72,18 @@ export class GenerateKeysComponent implements OnInit {
       this.keysService.generarLlaves(username, identificador).subscribe({
         next: (response: any) => {
           this.usuario = new User(response);
-
-          console.log("Keys generated successfully", this.usuario);
+          this.keysService.getKeysFromUser(this.username).subscribe({
+            next: (response: any) => {
+              this.keys = response;
+            }
+          })
         },
         error: (err) => {
           this.keysError = err.error?.detail || 'Error desconocido';
           console.error("Error generating keys", err);
         }
       });
-      this.keysService.getKeysFromUser(this.username).subscribe({
-        next: (response: any) => {
-          this.keys = response;
-        }
-      })
+
     }
   }
 }

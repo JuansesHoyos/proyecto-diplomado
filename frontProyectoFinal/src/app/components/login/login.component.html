@@ -16,6 +16,7 @@
       </div>
     </div>
     <button type="submit" [disabled]="loginForm.invalid">Iniciar Sesión</button>
+    <button type="submit" (click)="logInWithGoogle()">Iniciar Sesión Con Gulu gulu</button>
   </form>
   <br>
   <button [routerLink]="['/register']"> Registrate</button>
