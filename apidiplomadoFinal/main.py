@@ -174,6 +174,7 @@ def generate_and_assign_token(user: UserLoginModel):
 
 # Función para verificar JWT
 def verify_token(token: str):
+    token = token.replace("Bearer ", "")
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM], audience=AUDIENCE, issuer=ISSUER)
 
@@ -200,23 +201,6 @@ def verify_token(token: str):
     except Exception as e:
         print("Exception", type(e))
         raise HTTPException(status_code=403, detail="Error inesperado")
-
-
-def probe_tokens(authorization: str):
-    try:
-        # Se revisa si el token viene en el header de la petición
-        if authorization is None:
-            raise HTTPException(status_code=401, detail="Authorization header missing")
-        # Se extrae el token limpio sin el bearer
-        token = authorization.split(" ")[1] if " " in authorization else authorization
-        # Verificar el token
-        if not verify_token(token):
-            raise HTTPException(status_code=401, detail="Invalid token")
-
-    except HTTPException as e:
-        raise e
-    except Exception as e:
-        raise HTTPException(status_code=500, detail={str(e)})
 
 
 # Función para hashear el documento (SHA-256)
@@ -337,7 +321,7 @@ def get_user_keys(user: str, authorization: Optional[str] = Header(None)):
 
 @app.post("/upload-file/")
 def upload_file(file: FileInput, authorization: Optional[str] = Header(None)):
-    probe_tokens(authorization)
+    verify_token(authorization)
 
     if file.doc:
         file_data = {
@@ -356,7 +340,7 @@ def upload_file(file: FileInput, authorization: Optional[str] = Header(None)):
 
 @app.get("/get_files_from_owner/")
 def get_files_from_owner(owner: str, authorization: Optional[str] = Header(None)):
-    probe_tokens(authorization)
+    verify_token(authorization)
     finded_docs = docs_collection.find({"owner": owner})
 
     docs_list = list(finded_docs)
@@ -379,7 +363,7 @@ def get_files_from_owner(owner: str, authorization: Optional[str] = Header(None)
 
 @app.get("/delete_files_from_owner/")
 def delete_files_from_owner(documentid: str, authorization: Optional[str] = Header(None)):
-    probe_tokens(authorization)
+    verify_token(authorization)
     docs_collection.delete_one({"_id": ObjectId(documentid)})
     return {"message": "Archivo deleteado correctamente"}
 
@@ -387,7 +371,7 @@ def delete_files_from_owner(documentid: str, authorization: Optional[str] = Head
 @app.post("/share_document/")
 def share_to_user(shareWith: ShareWith, authorization: Optional[str] = Header(None)):
     separator = "{<#-#>}"
-    probe_tokens(authorization)
+    verify_token(authorization)
 
     doc = docs_collection.find_one({"_id": ObjectId(shareWith.documentid)})
 
@@ -401,32 +385,13 @@ def share_to_user(shareWith: ShareWith, authorization: Optional[str] = Header(No
         return {"message": "Documento compartido con exito"}
 
 
-@app.get("/get_shareds/")
-def get_shareds(username: str, authorization: Optional[str] = Header(None)):
-    probe_tokens(authorization)
-
-    # Expresión regular que busca el usuario dentro del campo "shared"
-    regex_pattern = re.compile(rf"\{{<#-#>\}}{username}\{{<#-#>\}}")
-
-    # Consulta en la colección
-    results = docs_collection.find({"shared": regex_pattern})
-
-    # Procesa los documentos y convierte los ObjectId a strings
-    matching_documents = []
-    for doc in results:
-        doc["_id"] = str(doc["_id"])  # Convertir ObjectId a string
-        matching_documents.append(doc)
-
-    if matching_documents:
-        return jsonable_encoder(matching_documents)
-    else:
-        return {"message": f"No se encontraron documentos compartidos con '{username}'"}
-
-
 @app.post("/sign_file/")
 def sign_file(signDocInput: SignDocInput, authorization: Optional[str] = Header(None)):
     try:
-        probe_tokens(authorization)
+        verify_token(authorization)
+
+        private_key_temp = signDocInput.private_key.replace("- ", "-\n")
+        private_key_temp = private_key_temp.replace(" -", "\n-")
 
         doc = docs_collection.find_one({"_id": ObjectId(signDocInput.document_id)})
         doc_data = doc["doc"]
@@ -434,7 +399,7 @@ def sign_file(signDocInput: SignDocInput, authorization: Optional[str] = Header(
         document_hash = hash_document(doc_data)
         # Cargar la clave privada del usuario desde el parámetro
         private_key = serialization.load_pem_private_key(
-            signDocInput.private_key.encode('utf-8'),
+            private_key_temp.encode('utf-8'),
             password=None,
             backend=default_backend()
         )
@@ -461,6 +426,45 @@ def sign_file(signDocInput: SignDocInput, authorization: Optional[str] = Header(
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error al firmar el documento: {str(e)}")
+
+@app.get("/get_shareds/")
+def get_shareds(username: str, authorization: Optional[str] = Header(None)):
+    verify_token(authorization)
+
+    # Expresión regular que busca el usuario dentro del campo "shared"
+    regex_pattern = re.compile(rf"\{{<#-#>\}}{username}\{{<#-#>\}}")
+
+    # Consulta en la colección
+    results = docs_collection.find({"shared": regex_pattern})
+
+    # Procesa los documentos y convierte los ObjectId a strings
+    matching_documents = []
+    for doc in results:
+        shared_doc = {
+            "id": str(doc["_id"]),
+            "name": doc["name"],
+            "owner": doc["owner"],
+            "shared": doc["shared"],
+            "signatures": doc["signatures"]
+
+        }
+        matching_documents.append(shared_doc)
+
+    if matching_documents:
+        return jsonable_encoder(matching_documents)
+    else:
+        return {"message": f"No se encontraron documentos compartidos con '{username}'"}
+
+@app.delete("/stop_sharing/")
+def stop_sharing(documentId: str, user: str, authorization: Optional[str] = Header(None)):
+    verify_token(authorization)
+    doc = docs_collection.find_one({"_id": ObjectId(documentId)})
+    actual_shareds = doc["shared"]
+    new_shareds = actual_shareds.replace(user+"{<#-#>}", "")
+    docs_collection.update_one({"_id": ObjectId(documentId)},
+                               {"$set": {"shared": new_shareds}})
+    return {"message": "Acceso eliminado con exito"}
+
 
 
 @app.get("/")
