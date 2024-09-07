@@ -1,3 +1,4 @@
+import hashlib
 import os
 import jwt
 import re
@@ -6,8 +7,8 @@ from typing import Optional
 
 from bson import ObjectId
 from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography.hazmat.primitives import serialization, hashes
+from cryptography.hazmat.primitives.asymmetric import rsa, padding
 from fastapi import Depends
 from fastapi import FastAPI, HTTPException, Header
 from fastapi.encoders import jsonable_encoder
@@ -114,6 +115,11 @@ class ShareWith(BaseModel):
     new_share: str = ""
 
 
+class SignDocInput(BaseModel):
+    document_id: str
+    private_key: str
+
+
 # Funciones
 # Función para generar llaves RSA
 def generate_keys():
@@ -196,17 +202,6 @@ def verify_token(token: str):
         raise HTTPException(status_code=403, detail="Error inesperado")
 
 
-def get_current_user(token: str = Depends(oauth2_scheme)):
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        username: str = payload.get("sub")
-        if username is None:
-            raise HTTPException(status_code=401, detail="Credenciales no válidas")
-        return username
-    except:
-        raise HTTPException(status_code=401, detail="Token inválido o expirado")
-
-
 def probe_tokens(authorization: str):
     try:
         # Se revisa si el token viene en el header de la petición
@@ -224,21 +219,20 @@ def probe_tokens(authorization: str):
         raise HTTPException(status_code=500, detail={str(e)})
 
 
+# Función para hashear el documento (SHA-256)
+def hash_document(document_content: str):
+    # Crea un hash del contenido del documento
+    hash_object = hashlib.sha256()
+    hash_object.update(document_content.encode('utf-8'))
+    return hash_object.digest()
+
+
 # RUTAS CONSUMIBLES
 # Ruta para generar y guardar claves
 @app.post("/generate-keys/")
 def generate_keys_for_user(input: GenerateKeysInput, authorization: Optional[str] = Header(None)):
     try:
-        # Se revisa si el token viene en el header de la petición
-        if authorization is None:
-            raise HTTPException(status_code=401, detail="Authorization header missing")
-
-        # Se extrae el token limpio sin el bearer
-        token = authorization.split(" ")[1] if " " in authorization else authorization
-
-        # Verificar el token
-        if not verify_token(token):
-            raise HTTPException(status_code=401, detail="Invalid token")
+        verify_token(authorization)
 
         # Generar llaves
         private_key, public_key = generate_keys()
@@ -317,14 +311,7 @@ def login_user(user: UserLoginModel):
 @app.get("/getKeys")
 def get_user_keys(user: str, authorization: Optional[str] = Header(None)):
     try:
-        # Se revisa si el token viene en el header de la petición
-        if authorization is None:
-            raise HTTPException(status_code=401, detail="Authorization header missing")
-        # Se extrae el token limpio sin el bearer
-        token = authorization.split(" ")[1] if " " in authorization else authorization
-        # Verificar el token
-        if not verify_token(token):
-            raise HTTPException(status_code=401, detail="Invalid token")
+        verify_token(authorization)
 
         # Buscar las llaves del usuario en la base de datos
         llaves_cursor = users_collection.find({"username": user})
@@ -343,10 +330,8 @@ def get_user_keys(user: str, authorization: Optional[str] = Header(None)):
         # Convertir a JSON serializable
         return jsonable_encoder(llaves_serializable)
     except HTTPException as e:
-        print(e)
         raise e
     except Exception as e:
-        print(e)
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -360,7 +345,7 @@ def upload_file(file: FileInput, authorization: Optional[str] = Header(None)):
             "name": file.name,
             "owner": file.owner,
             "shared": "{<#-#>}",
-            "signatures": file.signatures
+            "signatures": "{<#-#>}"
         }
         docs_collection.insert_one(file_data)
 
@@ -436,6 +421,46 @@ def get_shareds(username: str, authorization: Optional[str] = Header(None)):
         return jsonable_encoder(matching_documents)
     else:
         return {"message": f"No se encontraron documentos compartidos con '{username}'"}
+
+
+@app.post("/sign_file/")
+def sign_file(signDocInput: SignDocInput, authorization: Optional[str] = Header(None)):
+    try:
+        probe_tokens(authorization)
+
+        doc = docs_collection.find_one({"_id": ObjectId(signDocInput.document_id)})
+        doc_data = doc["doc"]
+        # Hashear el contenido del documento
+        document_hash = hash_document(doc_data)
+        # Cargar la clave privada del usuario desde el parámetro
+        private_key = serialization.load_pem_private_key(
+            signDocInput.private_key.encode('utf-8'),
+            password=None,
+            backend=default_backend()
+        )
+        # Firmar el hash del documento
+        signature = private_key.sign(
+            document_hash,
+            padding.PSS(
+                mgf=padding.MGF1(hashes.SHA256()),
+                salt_length=padding.PSS.MAX_LENGTH,
+
+            ),
+            hashes.SHA256()
+        )
+        previous_signs = doc["signatures"]
+
+        adding_signs = previous_signs+"#-#"+signature.hex()
+        docs_collection.update_one({"_id": ObjectId(signDocInput.document_id)},
+                                   {"$set":  {"signatures": adding_signs}})
+
+        return {
+            "message": "Documento firmado con éxito",
+            "documento": doc["name"],
+            "signature": signature.hex()
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error al firmar el documento: {str(e)}")
 
 
 @app.get("/")

@@ -6,3 +6,5 @@ bcrypt
 pydantic
 uvicorn
 fastapi[standard]
+hashlib
+starlette
