@@ -427,6 +427,7 @@ def sign_file(signDocInput: SignDocInput, authorization: Optional[str] = Header(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error al firmar el documento: {str(e)}")
 
+
 @app.get("/get_shareds/")
 def get_shareds(username: str, authorization: Optional[str] = Header(None)):
     verify_token(authorization)
@@ -455,6 +456,7 @@ def get_shareds(username: str, authorization: Optional[str] = Header(None)):
     else:
         return {"message": f"No se encontraron documentos compartidos con '{username}'"}
 
+
 @app.delete("/stop_sharing/")
 def stop_sharing(documentId: str, user: str, authorization: Optional[str] = Header(None)):
     verify_token(authorization)
@@ -464,7 +466,6 @@ def stop_sharing(documentId: str, user: str, authorization: Optional[str] = Head
     docs_collection.update_one({"_id": ObjectId(documentId)},
                                {"$set": {"shared": new_shareds}})
     return {"message": "Acceso eliminado con exito"}
-
 
 
 @app.get("/")
