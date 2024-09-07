@@ -10,6 +10,7 @@ export const routes: Routes = [
   {path: 'register', component: RegisterComponent},
   {path: 'generate-keys', component: GenerateKeysComponent},
   {path: 'home', component: HomeComponent},
+  {path: '**', component: LoginComponent},
 ];
 
 @NgModule({

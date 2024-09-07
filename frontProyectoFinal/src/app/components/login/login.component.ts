@@ -1,10 +1,11 @@
-import {Component} from '@angular/core';
+import {Component, OnInit} from '@angular/core';
 import {FormBuilder, FormGroup, ReactiveFormsModule, Validators} from '@angular/forms';
 import * as CryptoJS from 'crypto-js';
 import {NgIf} from "@angular/common";
 import {Router, RouterLink} from "@angular/router";
 import {LoginAndRegisterServiceService} from "../../services/login-and-register-service.service";
 import {Login} from "../../class/login";
+import {GoogleAuthServiceService} from "../../services/google-auth-service.service";
 
 @Component({
   selector: 'app-login',
@@ -17,11 +18,15 @@ import {Login} from "../../class/login";
   ],
   styleUrls: ['./login.component.css']
 })
-export class LoginComponent {
+export class LoginComponent implements OnInit{
   loginForm: FormGroup;
   loginError: string | null = null;
 
-  constructor(private fb: FormBuilder, private loginService: LoginAndRegisterServiceService, private router: Router) {
+
+  ngOnInit() {
+  }
+
+  constructor(private fb: FormBuilder, private loginService: LoginAndRegisterServiceService, private authService: GoogleAuthServiceService, private router: Router) {
     this.loginForm = this.fb.group({
       username: ['', [Validators.required, Validators.minLength(3)]],
       password: ['', [Validators.required, Validators.minLength(6)]]
@@ -42,6 +47,7 @@ export class LoginComponent {
 
       this.loginService.loginMethod(userLogin).subscribe({
         next: (response) => {
+
           const token = response.token ?? '';
           localStorage.setItem('jwt_token', token);
 
@@ -57,6 +63,12 @@ export class LoginComponent {
   }
 
   logInWithGoogle() {
+    this.authService.login();
 
   }
+
+
+
+
+
 }
