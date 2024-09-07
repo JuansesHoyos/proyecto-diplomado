@@ -5,7 +5,6 @@ import {NgIf} from "@angular/common";
 import {Router, RouterLink} from "@angular/router";
 import {LoginAndRegisterServiceService} from "../../services/login-and-register-service.service";
 import {Login} from "../../class/login";
-import {GoogleAuthServiceService} from "../../services/google-auth-service.service";
 
 @Component({
   selector: 'app-login',
@@ -26,7 +25,7 @@ export class LoginComponent implements OnInit{
   ngOnInit() {
   }
 
-  constructor(private fb: FormBuilder, private loginService: LoginAndRegisterServiceService, private authService: GoogleAuthServiceService, private router: Router) {
+  constructor(private fb: FormBuilder, private loginService: LoginAndRegisterServiceService, private router: Router) {
     this.loginForm = this.fb.group({
       username: ['', [Validators.required, Validators.minLength(3)]],
       password: ['', [Validators.required, Validators.minLength(6)]]
@@ -61,14 +60,4 @@ export class LoginComponent implements OnInit{
       console.log('Formulario no válido');
     }
   }
-
-  logInWithGoogle() {
-    this.authService.login();
-
-  }
-
-
-
-
-
 }

@@ -1,8 +1,8 @@
-import { Component } from '@angular/core';
+import {Component, OnInit} from '@angular/core';
 import {GenerateKeysComponent} from "../generate-keys/generate-keys.component";
 import {FileManagementComponent} from "../file-management/file-management.component";
 import {NgIf} from "@angular/common";
-import {Router} from "@angular/router";
+import {ActivatedRoute, Router} from "@angular/router";
 
 
 @Component({
@@ -16,11 +16,16 @@ import {Router} from "@angular/router";
   templateUrl: './home.component.html',
   styleUrl: './home.component.css'
 })
-export class HomeComponent {
+export class HomeComponent implements OnInit{
   menuExpanded = true;
   currentComponent: string | null = "file-management";
+  token: string | null = null;
+  tokenPayload: any = null;
 
-  constructor(private router: Router) {}
+  ngOnInit(): void {
+  }
+
+  constructor(private router: Router, private route: ActivatedRoute) {}
 
   toggleMenu() {
     this.menuExpanded = !this.menuExpanded;

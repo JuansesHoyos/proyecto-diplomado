@@ -9,7 +9,7 @@ import {Observable} from "rxjs";
 })
 export class FileManagementService {
 
-  private apiUrlBase = 'http://127.0.0.1:8000/';
+  private apiUrlBase = 'http://localhost:8081/api/';
   private uploadFile = 'upload-file/';
   private getFiles = 'get_files_from_owner/?owner=';
   private deleFile = 'delete_files_from_owner/?documentid=';
