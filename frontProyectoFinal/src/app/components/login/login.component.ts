@@ -6,6 +6,10 @@ import {Router, RouterLink} from "@angular/router";
 import {LoginAndRegisterServiceService} from "../../services/login-and-register-service.service";
 import {Login} from "../../class/login";
 
+
+
+
+
 @Component({
   selector: 'app-login',
   templateUrl: './login.component.html',
@@ -23,36 +27,14 @@ export class LoginComponent implements OnInit{
 
 
   ngOnInit() {
-    // @ts-ignore
-    google.accounts.id.initialize({
-      client_id: "777419971638-e4bf7c02bf5ok93n7uk5fohdv1n203ed.apps.googleusercontent.com",
-      callback: this.handleCredentialResponse.bind(this),
-      auto_select: false,
-      cancel_on_tap_outside: true,
-
-    });
-    // @ts-ignore
-    google.accounts.id.renderButton(
-      // @ts-ignore
-      document.getElementById("google-button"),
-      { theme: "outline", size: "large", width: "100%" }
-    );
-    // @ts-ignore
-    google.accounts.id.prompt((notification: PromptMomentNotification) => {});
-  }
-
-  async handleCredentialResponse(response: any) {
-    // Here will be your response from Google.
-    console.log(response);
-    localStorage.setItem('google_token', response.credential);
-    console.log("TOKEN DESDE GOOGLE:" + localStorage.getItem('google_token'))
-
   }
 
   constructor(private fb: FormBuilder, private loginService: LoginAndRegisterServiceService, private router: Router) {
+    
     this.loginForm = this.fb.group({
-      username: ['', [Validators.required, Validators.email, Validators.minLength(5)]],
-      password: ['', [Validators.required, Validators.minLength(6)]]
+      username: ['', [Validators.required, Validators.minLength(3)]],
+      password: ['', [Validators.required, Validators.minLength(6)]],
+      
     });
   }
 
@@ -83,5 +65,15 @@ export class LoginComponent implements OnInit{
     } else {
       console.log('Formulario no válido');
     }
+  }
+  loginWithGoogle() {
+    this.loginService.initiateGoogleLogin().subscribe({
+      next: (response) => {
+        window.location.href = response.authorization_url;
+      },
+      error: (error) => {
+        console.error('Error initiating Google login', error);
+      }
+    });
   }
 }

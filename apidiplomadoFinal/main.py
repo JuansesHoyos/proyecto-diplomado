@@ -19,7 +19,17 @@ from pydantic import BaseModel
 from pymongo import MongoClient
 from starlette.middleware.cors import CORSMiddleware
 
+from google.oauth2 import id_token
+from google.auth.transport import requests
+
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+
+
+flow = Flow.from_client_secrets_file(
+    'path/to/client_secrets.json',
+    scopes=['openid', 'https://www.googleapis.com/auth/userinfo.email', 'https://www.googleapis.com/auth/userinfo.profile'],
+    redirect_uri='http://localhost:8000/callback'
+)
 
 # Configuración de los tokens
 SECRET_KEY = """"
@@ -294,6 +304,8 @@ def login_user(user: UserLoginModel):
     return full_user
 
 
+
+
 @app.get("/getKeys")
 def get_user_keys(user: str, authorization: Optional[str] = Header(None)):
     try:
@@ -469,32 +481,78 @@ def stop_sharing(documentId: str, user: str, authorization: Optional[str] = Head
                                {"$set": {"shared": new_shareds}})
     return {"message": "Acceso eliminado con exito"}
 
+@app.post("/google-signin")
+async def google_signin(token: str):
+    try:
+        # Verify the Google ID token
+        idinfo = id_token.verify_oauth2_token(
+            token, requests.Request(),
+            "186962537897-i08jcmfs0n5p9ebjollevt2br1rm3bti.apps.googleusercontent.com"
+        )
 
-@app.get("/logWhithGoogle")
-def logWhithGoogle(token: str):
+        # Get user info from the ID token
+        user_id = idinfo['sub']
+        email = idinfo['email']
+        name = idinfo['name']
 
-    token = token.replace("Bearer ", "")
-    public_key_str = """
------BEGIN PUBLIC KEY-----
-MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA6S7asUuzq5Q/3U9rbs+P
-kDVIdjgmtgWreG5qWPsC9xXZKiMV1AiV9LXyqQsAYpCqEDM3XbfmZqGb48yLhb/X
-qZaKgSYaC/h2DjM7lgrIQAp9902Rr8fUmLN2ivr5tnLxUUOnMOc2SQtr9dgzTONY
-W5Zu3PwyvAWk5D6ueIUhLtYzpcB+etoNdL3Ir2746KIy/VUsDwAM7dhrqSK8U2xF
-CGlau4ikOTtvzDownAMHMrfE7q1B6WZQDAQlBmxRQsyKln5DIsKv6xauNsHRgBAK
-ctUxZG8M4QJIx3S6Aughd3RZC4Ca5Ae9fd8L8mlNYBCrQhOZ7dS0f4at4arlLcaj
-twIDAQAB
------END PUBLIC KEY-----
-"""
+        # Check if the user exists in your database
+        user = login_collection.find_one({"username": email})
 
-    public_key = serialization.load_pem_public_key(
-        public_key_str.encode()
-    )
+        if not user:
+            # Create a new user if they don't exist
+            user_data = {
+                "username": email,
+                "name": name,
+                "google_id": user_id
+            }
+            login_collection.insert_one(user_data)
 
-    cosas = jwt.decode(token, public_key ,algorithms=["RS256"], audience="https://login.google.com/")
-    print("COSAS: ", cosas)
+        # Generate a JWT token for the user
+        token_data = {
+            "sub": email,
+            "name": name,
+            "iss": ISSUER,
+            "aud": AUDIENCE
+        }
+        jwt_token = generate_token(token_data)
 
-    #db_user = login_collection.find_one({"username": email})
+        return {"token": jwt_token}
 
+    except ValueError:
+        # Invalid token
+        raise HTTPException(status_code=400, detail="Invalid token")
+
+@app.get("/login")
+async def login():
+    authorization_url, _ = flow.authorization_url(prompt='consent')
+    return RedirectResponse(authorization_url)
+
+@app.get("/callback")
+async def callback(code: str):
+    flow.fetch_token(code=code)
+    credentials = flow.credentials
+    
+    try:
+        # Verifica el token ID
+        idinfo = id_token.verify_oauth2_token(
+            credentials.id_token, requests.Request(), 
+            "186962537897-i08jcmfs0n5p9ebjollevt2br1rm3bti.apps.googleusercontent.com"
+        )
+
+        # Obtén la información del usuario
+        user_email = idinfo['email']
+        user_name = idinfo['name']
+
+        # Aquí puedes crear o actualizar el usuario en tu base de datos
+        # ...
+
+        # Genera un token JWT para tu aplicación
+        jwt_token = generate_token({"sub": user_email, "name": user_name})
+        
+        return {"token": jwt_token}
+    
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid token")
 
 
 @app.get("/")

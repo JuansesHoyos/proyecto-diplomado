@@ -1,4 +1,4 @@
-<div class="form-container">
+<div class="form-container"></div>
   <form [formGroup]="loginForm" (ngSubmit)="onLogin()">
     <h2>Iniciar Sesión</h2>
     <div>
@@ -16,10 +16,11 @@
       </div>
     </div>
     <button type="submit" [disabled]="loginForm.invalid">Iniciar Sesión</button>
-
   </form>
   <br>
-  <button [routerLink]="['/register']"> Registrate</button>
+  <button [routerLink]="['/register']">Registrate</button>
+  <br>
+  <button (click)="loginWithGoogle()">Iniciar sesión con Google</button>
   <div class="" id="google-button"></div>
 </div>
 
@@ -31,5 +32,3 @@
     <p>{{ loginError }}</p>
   </div>
 </div>
-
-
