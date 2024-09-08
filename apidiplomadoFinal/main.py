@@ -1,20 +1,20 @@
 import hashlib
 import os
-import jwt
 import re
 from datetime import timedelta, datetime, timezone
 from typing import Optional
 
+import jwt
 from bson import ObjectId
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization, hashes
 from cryptography.hazmat.primitives.asymmetric import rsa, padding
-from fastapi import Depends
 from fastapi import FastAPI, HTTPException, Header
 from fastapi.encoders import jsonable_encoder
 from fastapi.security import HTTPBearer
 from fastapi.security import OAuth2PasswordBearer
 from jwt import ExpiredSignatureError
+from nbformat.sign import algorithms
 from pydantic import BaseModel
 from pymongo import MongoClient
 from starlette.middleware.cors import CORSMiddleware
@@ -49,6 +49,8 @@ Mhb3AoGBAI0xS/a5QmKEYb2zcttLb2XymOerIjeoKwxqql9ezdfoHLzo/t+5yf1y
 MFV8I5IrbXSZzqsvKr80rQWNc2b+5BgsOxNQ2J+xpu5NWL20bueAZwusTShRtLL6
 D+m1G7AJ0RJgilf4cghcMYYOBL3AGXPdAgFaCSOoSL9S27E5aoO+
 """
+
+
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 120
 ISSUER = "DavidJuanJuanAndres"
@@ -468,6 +470,34 @@ def stop_sharing(documentId: str, user: str, authorization: Optional[str] = Head
     return {"message": "Acceso eliminado con exito"}
 
 
+@app.get("/logWhithGoogle")
+def logWhithGoogle(token: str):
+
+    token = token.replace("Bearer ", "")
+    public_key_str = """
+-----BEGIN PUBLIC KEY-----
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA6S7asUuzq5Q/3U9rbs+P
+kDVIdjgmtgWreG5qWPsC9xXZKiMV1AiV9LXyqQsAYpCqEDM3XbfmZqGb48yLhb/X
+qZaKgSYaC/h2DjM7lgrIQAp9902Rr8fUmLN2ivr5tnLxUUOnMOc2SQtr9dgzTONY
+W5Zu3PwyvAWk5D6ueIUhLtYzpcB+etoNdL3Ir2746KIy/VUsDwAM7dhrqSK8U2xF
+CGlau4ikOTtvzDownAMHMrfE7q1B6WZQDAQlBmxRQsyKln5DIsKv6xauNsHRgBAK
+ctUxZG8M4QJIx3S6Aughd3RZC4Ca5Ae9fd8L8mlNYBCrQhOZ7dS0f4at4arlLcaj
+twIDAQAB
+-----END PUBLIC KEY-----
+"""
+
+    public_key = serialization.load_pem_public_key(
+        public_key_str.encode()
+    )
+
+    cosas = jwt.decode(token, public_key ,algorithms=["RS256"], audience="https://login.google.com/")
+    print("COSAS: ", cosas)
+
+    #db_user = login_collection.find_one({"username": email})
+
+
+
 @app.get("/")
 def read_root():
     return {"Hello World"}
+

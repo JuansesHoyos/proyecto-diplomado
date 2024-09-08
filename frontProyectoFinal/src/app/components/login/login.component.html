@@ -5,7 +5,7 @@
       <label for="username">Usuario</label>
       <input id="username" formControlName="username" type="text">
       <div *ngIf="loginForm.get('username')?.invalid && loginForm.get('username')?.touched">
-        <small>El nombre de usuario es requerido (mínimo 3 caracteres).</small>
+        <small>El valor debe ser un correo valido.</small>
       </div>
     </div>
     <div>
@@ -20,48 +20,7 @@
   </form>
   <br>
   <button [routerLink]="['/register']"> Registrate</button>
-  <div id="g_id_onload"
-       data-client_id="777419971638-e4bf7c02bf5ok93n7uk5fohdv1n203ed.apps.googleusercontent.com"
-       data-context="use"
-       data-ux_mode="popup"
-       data-login_uri="http://localhost:4200/home/"
-       data-itp_support="true"
-       data-callback="handleCredentialResponse">
-  </div>
-
-  <div class="g_id_signin"
-       data-type="standard"
-       data-shape="rectangular"
-       data-theme="outline"
-       data-text="signin_with"
-       data-size="large"
-       data-logo_alignment="left">
-  </div>
-
-  <script>
-    function handleCredentialResponse(response) {
-      console.log("------------------------------------------------------------------------------------------")
-      console.log("ID Token: " + response.credential);
-
-      // Aquí puedes hacer algo con el ID token, como enviarlo a tu backend
-      // o almacenarlo localmente.
-
-      // Ejemplo: Enviar el token a tu backend usando fetch
-      fetch('http://localhost:4200/your-backend-endpoint', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          token: response.credential
-        })
-      }).then(response => response.json())
-        .then(data => console.log('Success:', data))
-        .catch(error => console.error('Error:', error));
-    }
-  </script>
-
-
+  <div class="" id="google-button"></div>
 </div>
 
 <div class="modal" *ngIf="loginError">
