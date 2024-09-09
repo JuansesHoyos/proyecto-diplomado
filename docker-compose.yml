@@ -1,6 +1,5 @@
 services:
 
-
   firewall:
     image: nginx:alpine
     container_name: firewall
@@ -9,7 +8,6 @@ services:
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
     depends_on:
-      - backend
       - frontend
     networks:
       - app_net
@@ -24,6 +22,8 @@ services:
       - app_net
     environment:
       - MONGO_URL=mongodb://persistencia:27017/pruebaDB
+    expose:
+      - "8000"
     depends_on:
       - persistencia
     
@@ -35,6 +35,8 @@ services:
     container_name: frontend
     networks:
       - app_net
+    expose:
+      - "80"
     depends_on:
       - backend
 

@@ -1,12 +1,9 @@
-import base64
 import hashlib
 import os
 import re
+import jwt
 from datetime import timedelta, datetime, timezone
 from typing import Optional
-
-import jwt
-from Demos.win32ts_logoff_disconnected import username
 from bson import ObjectId
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization, hashes
@@ -15,7 +12,6 @@ from fastapi import FastAPI, HTTPException, Header
 from fastapi.encoders import jsonable_encoder
 from fastapi.security import HTTPBearer
 from fastapi.security import OAuth2PasswordBearer
-from jupyter_server.auth import passwd
 from jwt import ExpiredSignatureError
 from pydantic import BaseModel
 from pymongo import MongoClient
@@ -62,8 +58,8 @@ AUDIENCE = "Proyecto Diplomado"
 security = HTTPBearer()
 
 # Conexión a MongoDB
-dburl = os.getenv('MONGO_URL', 'mongodb://localhost:27017/pruebaDB')
-# dburl = os.getenv('MONGO_URL', 'mongodb://persistencia:27017/pruebaDB')
+#dburl = os.getenv('MONGO_URL', 'mongodb://localhost:27017/pruebaDB')
+dburl = os.getenv('MONGO_URL', 'mongodb://persistencia:27017/pruebaDB')
 client = MongoClient(dburl)
 db = client["pruebaDB"]
 users_collection = db['Usuario']

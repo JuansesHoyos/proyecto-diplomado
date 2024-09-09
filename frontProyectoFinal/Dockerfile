@@ -13,6 +13,8 @@ RUN npm install
 # Copia el resto del código fuente de la aplicación al contenedor
 COPY . .
 
+RUN npm install jwt-decode
+
 # Construye la aplicación Angular en modo producción
 RUN npm run build
 
