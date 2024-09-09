@@ -1,5 +1,5 @@
-import { Injectable } from '@angular/core';
-import {HttpClient, HttpHeaders} from "@angular/common/http";
+import {Injectable} from '@angular/core';
+import {HttpClient, HttpHeaders, HttpParams} from "@angular/common/http";
 import {Doc} from "../class/doc";
 import {User} from "../class/user";
 import {Observable} from "rxjs";
@@ -12,15 +12,17 @@ export class FileManagementService {
 
   private apiUrlBase = 'http://localhost:8081/api/';
   private uploadFile = 'upload-file/';
-  private getFiles = 'get_files_from_owner/?owner=';
-  private deleFile = 'delete_files_from_owner/?documentid=';
-  private getSharedsUrl = 'get_shareds/?username=';
+  private getFiles = 'get_files_from_owner';
+  private deleFile = 'delete_files_from_owner';
+  private getSharedsUrl = 'get_shareds';
   private shareWith = 'share_document/';
   private signFile = 'sign_file/';
-  private getSigns = 'viewSignsFromDocument/?documentid='
-  constructor(private http: HttpClient) { }
+  private getSigns = 'viewSignsFromDocument'
 
-  subirArchivo(b64: string,document: Doc){
+  constructor(private http: HttpClient) {
+  }
+
+  subirArchivo(b64: string, document: Doc) {
     let payload = {"doc": b64, "owner": document.owner, "name": document.name}
 
     const authToken = localStorage.getItem("jwt_token");
@@ -30,7 +32,7 @@ export class FileManagementService {
     return this.http.post<User>(
       `${this.apiUrlBase}${this.uploadFile}`,
       payload,
-      { headers }
+      {headers}
     );
   }
 
@@ -39,21 +41,17 @@ export class FileManagementService {
     const headers = new HttpHeaders({
       Authorization: `Bearer ${authToken}`,
     });
-    return this.http.get<Doc[]>(
-      this.apiUrlBase+this.getFiles+owner,
-      { headers }
-    );
+    const params = new HttpParams().set('owner', owner);
+    return this.http.get<Doc[]>(this.apiUrlBase + this.getFiles, {headers, params});
   }
 
-  deleteFile(documentid: string): Observable<string>{
+  deleteFile(documentid: string): Observable<string> {
     const authToken = localStorage.getItem("jwt_token");
     const headers = new HttpHeaders({
       Authorization: `Bearer ${authToken}`,
     });
-    return this.http.get<string>(
-      this.apiUrlBase+this.deleFile+documentid,
-      { headers }
-    );
+    const params = new HttpParams().set('documentid', documentid);
+    return this.http.get<string>(this.apiUrlBase + this.deleFile, {headers, params});
   }
 
   getShareds(username: string): Observable<Doc[]> {
@@ -61,10 +59,8 @@ export class FileManagementService {
     const headers = new HttpHeaders({
       Authorization: `Bearer ${authToken}`,
     });
-    return this.http.get<Doc[]>(
-      this.apiUrlBase+this.getSharedsUrl+username,
-      { headers }
-    );
+    const params = new HttpParams().set('username', username);
+    return this.http.get<Doc[]>(this.apiUrlBase + this.getSharedsUrl, {headers, params});
   }
 
   shareWithUser(documentid: string, new_share: string): Observable<string> {
@@ -76,7 +72,7 @@ export class FileManagementService {
     return this.http.post<string>(
       `${this.apiUrlBase}${this.shareWith}`,
       payload,
-      { headers }
+      {headers}
     );
   }
 
@@ -89,15 +85,16 @@ export class FileManagementService {
     return this.http.post<string>(
       `${this.apiUrlBase}${this.signFile}`,
       payload,
-      { headers }
+      {headers}
     );
   }
-  viewSings(documentid: string){
-    let payload = {documentid};
+
+  viewSings(documentid: string) {
     const authToken = localStorage.getItem("jwt_token");
     const headers = new HttpHeaders({
       Authorization: `Bearer ${authToken}`,
     });
-    return this.http.get<Sings[]>(this.apiUrlBase+this.getSigns+documentid,{ headers });
+    const params = new HttpParams().set('documentid', documentid);
+    return this.http.get<Sings[]>(this.apiUrlBase + this.getSigns, {headers, params});
   }
 }

@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import {HttpClient, HttpHeaders} from '@angular/common/http';
+import {HttpClient, HttpHeaders, HttpParams} from '@angular/common/http';
 import { Observable } from "rxjs";
 import { User } from "../class/user";
 
@@ -10,7 +10,7 @@ export class KeysService {
 
   private apiUrlBase = 'http://localhost:8081/api/';
   private apiGenerateKeys = 'generate-keys/'
-  private getKeys = 'getKeys/?user=';
+  private getKeys = 'getKeys';
 
   constructor(private http: HttpClient) { }
 
@@ -34,7 +34,7 @@ export class KeysService {
     const headers = new HttpHeaders({
       Authorization: `Bearer ${authToken}`,
     });
-    // @ts-ignore
-    return this.http.get(this.apiUrlBase+this.getKeys+username, {headers})
+    const params = new HttpParams().set('user', username);
+    return this.http.get<User[]>(this.apiUrlBase + this.getKeys, { headers, params });
   }
 }

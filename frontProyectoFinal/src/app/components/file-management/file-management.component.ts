@@ -93,7 +93,7 @@ export class FileManagementComponent implements OnInit{
         });
 
         this.filesService.subirArchivo(base64String, userDocument).subscribe({
-          next: (response: any) => {
+          next: () => {
             this.filesService.getFilesFromUser(this.username).subscribe({
               next: (response: any) => {
                 this.files = response;
@@ -137,7 +137,11 @@ export class FileManagementComponent implements OnInit{
 
   signFile(documentId: string): void {
     if (this.privateTempKey) {
-      this.filesService.signDocument(documentId, this.privateTempKey).subscribe();
+      this.filesService.signDocument(documentId, this.privateTempKey).subscribe({
+        next: () => {
+          this.filesService.getFilesFromUser(this.username).subscribe()
+        }
+      });
     }
 
   }
