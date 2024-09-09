@@ -5,7 +5,7 @@ import {NgIf} from "@angular/common";
 import {Router, RouterLink} from "@angular/router";
 import {LoginAndRegisterServiceService} from "../../services/login-and-register-service.service";
 import {Login} from "../../class/login";
-import {jwtDecode, JwtPayload} from 'jwt-decode';
+import {jwtDecode} from 'jwt-decode';
 
 @Component({
   selector: 'app-login',
@@ -45,7 +45,7 @@ export class LoginComponent implements OnInit {
 
   constructor(private fb: FormBuilder, private loginService: LoginAndRegisterServiceService, private router: Router, private ngZone: NgZone) {
     this.loginForm = this.fb.group({
-      username: ['', [Validators.required, Validators.email, Validators.minLength(5)]],
+      username: ['', [Validators.required, Validators.minLength(3)]],
       password: ['', [Validators.required, Validators.minLength(6)]]
     });
   }
@@ -63,7 +63,7 @@ export class LoginComponent implements OnInit {
         next: (response: any) => {
           localStorage.setItem('jwt_token', response.token);
           this.ngZone.run(() => {
-            this.router.navigate(['/home']);
+            //this.router.navigate(['/home']);
           });
         },
         error: (error) => {

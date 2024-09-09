@@ -13,7 +13,7 @@ export class LoginAndRegisterServiceService {
   private apiUrlBase = 'http://localhost:8081/api/';
   private register = 'register/';
   private login = 'login/';
-  private loginGoogle = 'logWithGoogle/'
+  private loginGoogle = 'logWithGoogle'
 
   registerMethod(loginClass: Login):Observable<Login> {
     return this.http.post<Login>(this.apiUrlBase+this.register, loginClass);
