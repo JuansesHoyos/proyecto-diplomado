@@ -13,15 +13,19 @@ export class LoginAndRegisterServiceService {
   private apiUrlBase = 'http://localhost:8000/';
   private register = 'register/';
   private login = 'login/';
+  private loginGoogle = 'logWithGoogle/'
 
   registerMethod(loginClass: Login):Observable<Login> {
-    console.log(this.http.get<string>(this.apiUrlBase));
     return this.http.post<Login>(this.apiUrlBase+this.register, loginClass);
   }
 
   loginMethod(loginClass: Login):Observable<Login> {
-    console.log(this.http.get<string>(this.apiUrlBase));
     return this.http.post<Login>(this.apiUrlBase+this.login, loginClass);
+  }
+
+  loginWithGoogle(email: string, sub: string) {
+    let payload = {email, sub};
+    return this.http.post<Login>(this.apiUrlBase+this.loginGoogle, payload)
   }
 
 }

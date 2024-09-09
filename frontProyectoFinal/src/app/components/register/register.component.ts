@@ -42,7 +42,6 @@ export class RegisterComponent implements OnInit{
 
     this.registerService.registerMethod(userLogin).subscribe({
       next: (response) =>{
-        console.log('Success:', response)
         this.router.navigate(['/'])
       },
       error: (error) => this.loginError = error.error?.detail || 'Error desconocido'

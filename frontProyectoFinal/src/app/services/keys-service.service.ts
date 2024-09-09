@@ -10,14 +10,9 @@ export class KeysService {
 
   private apiUrlBase = 'http://localhost:8000/';
   private apiGenerateKeys = 'generate-keys/'
-  private getFromUser = 'getPublicKey/?user='
   private getKeys = 'getKeys/?user=';
 
   constructor(private http: HttpClient) { }
-
-  getUsuarios(username: string):Observable<User> {
-    return this.http.get<User>(this.apiUrlBase+this.getFromUser+username);
-  }
 
   generarLlaves(username: string, identificador: string): Observable<User> {
     const payload = { username , identificador};

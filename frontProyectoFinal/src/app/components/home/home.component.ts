@@ -20,7 +20,6 @@ export class HomeComponent implements OnInit{
   menuExpanded = true;
   currentComponent: string | null = "file-management";
   token: string | null = null;
-  tokenPayload: any = null;
 
   ngOnInit(): void {
   }

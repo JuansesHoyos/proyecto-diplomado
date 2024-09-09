@@ -89,13 +89,17 @@ export class FileManagementComponent implements OnInit{
           owner: this.username,
         });
 
-        this.filesService.subirArchivo(base64String, userDocument).subscribe();
-
-        this.filesService.getFilesFromUser(this.username).subscribe({
+        this.filesService.subirArchivo(base64String, userDocument).subscribe({
           next: (response: any) => {
-            this.files = response;
+            this.filesService.getFilesFromUser(this.username).subscribe({
+              next: (response: any) => {
+                this.files = response;
+              }
+            });
           }
         });
+
+
       };
 
       reader.onerror = (error) => {
@@ -123,16 +127,9 @@ export class FileManagementComponent implements OnInit{
     });
   }
 
-  stopSharing(): void {
-    console.log('Dejar de compartir');
-
-
-  }
-
 
   signFile(documentId: string): void {
     if (this.privateTempKey) {
-      console.log("doc_Id", documentId);
       this.filesService.signDocument(documentId, this.privateTempKey).subscribe();
     }
 
