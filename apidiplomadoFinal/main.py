@@ -1,3 +1,4 @@
+import base64
 import hashlib
 import os
 import re
@@ -5,6 +6,7 @@ from datetime import timedelta, datetime, timezone
 from typing import Optional
 
 import jwt
+from Demos.win32ts_logoff_disconnected import username
 from bson import ObjectId
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization, hashes
@@ -13,8 +15,8 @@ from fastapi import FastAPI, HTTPException, Header
 from fastapi.encoders import jsonable_encoder
 from fastapi.security import HTTPBearer
 from fastapi.security import OAuth2PasswordBearer
+from jupyter_server.auth import passwd
 from jwt import ExpiredSignatureError
-from nbformat.sign import algorithms
 from pydantic import BaseModel
 from pymongo import MongoClient
 from starlette.middleware.cors import CORSMiddleware
@@ -122,6 +124,11 @@ class SignDocInput(BaseModel):
     private_key: str
 
 
+class GoogleAuth(BaseModel):
+    email: str
+    sub: str
+
+
 # Funciones
 # Función para generar llaves RSA
 def generate_keys():
@@ -180,7 +187,7 @@ def verify_token(token: str):
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM], audience=AUDIENCE, issuer=ISSUER)
 
-        username: str = payload.get("sub")
+        username: str = payload.get("name")
         exp: int = payload.get("exp")
         nbf: int = payload.get("nbf")
 
@@ -201,7 +208,6 @@ def verify_token(token: str):
         raise HTTPException(status_code=403, detail="Token expirado")
 
     except Exception as e:
-        print("Exception", type(e))
         raise HTTPException(status_code=403, detail="Error inesperado")
 
 
@@ -331,7 +337,7 @@ def upload_file(file: FileInput, authorization: Optional[str] = Header(None)):
             "name": file.name,
             "owner": file.owner,
             "shared": "{<#-#>}",
-            "signatures": "{<#-#>}"
+            "signatures": "#-#"
         }
         docs_collection.insert_one(file_data)
 
@@ -417,7 +423,10 @@ def sign_file(signDocInput: SignDocInput, authorization: Optional[str] = Header(
         )
         previous_signs = doc["signatures"]
 
-        adding_signs = previous_signs+"#-#"+signature.hex()
+        token = authorization.replace("Bearer ", "")
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM], audience=AUDIENCE, issuer=ISSUER)
+        user = payload["name"]
+        adding_signs = previous_signs+user+"(-_-)"+signature.hex()+"#-#"
         docs_collection.update_one({"_id": ObjectId(signDocInput.document_id)},
                                    {"$set":  {"signatures": adding_signs}})
 
@@ -470,34 +479,30 @@ def stop_sharing(documentId: str, user: str, authorization: Optional[str] = Head
     return {"message": "Acceso eliminado con exito"}
 
 
-@app.get("/logWhithGoogle")
-def logWhithGoogle(token: str):
+@app.post("/logWithGoogle")
+def logWithGoogle(user: GoogleAuth):
+    existing_user = login_collection.find_one({"username": user.email})
 
-    token = token.replace("Bearer ", "")
-    public_key_str = """
------BEGIN PUBLIC KEY-----
-MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA6S7asUuzq5Q/3U9rbs+P
-kDVIdjgmtgWreG5qWPsC9xXZKiMV1AiV9LXyqQsAYpCqEDM3XbfmZqGb48yLhb/X
-qZaKgSYaC/h2DjM7lgrIQAp9902Rr8fUmLN2ivr5tnLxUUOnMOc2SQtr9dgzTONY
-W5Zu3PwyvAWk5D6ueIUhLtYzpcB+etoNdL3Ir2746KIy/VUsDwAM7dhrqSK8U2xF
-CGlau4ikOTtvzDownAMHMrfE7q1B6WZQDAQlBmxRQsyKln5DIsKv6xauNsHRgBAK
-ctUxZG8M4QJIx3S6Aughd3RZC4Ca5Ae9fd8L8mlNYBCrQhOZ7dS0f4at4arlLcaj
-twIDAQAB
------END PUBLIC KEY-----
-"""
-
-    public_key = serialization.load_pem_public_key(
-        public_key_str.encode()
-    )
-
-    cosas = jwt.decode(token, public_key ,algorithms=["RS256"], audience="https://login.google.com/")
-    print("COSAS: ", cosas)
-
-    #db_user = login_collection.find_one({"username": email})
-
+    if existing_user:
+        new_user = UserLoginModel(
+            username=user.email,
+            password=user.sub
+        )
+    else:
+        user_data = {
+            "username": user.email,
+            "password": user.sub,
+        }
+        login_collection.insert_one(user_data)
+        new_user = UserLoginModel(
+            username=user.email,
+            password=user.sub
+        )
+    token = generate_and_assign_token(new_user)
+    full_user = {"username": user.email, "token": token}
+    return full_user
 
 
 @app.get("/")
 def read_root():
     return {"Hello World"}
-
