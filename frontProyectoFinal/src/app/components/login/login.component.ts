@@ -63,7 +63,7 @@ export class LoginComponent implements OnInit {
         next: (response: any) => {
           localStorage.setItem('jwt_token', response.token);
           this.ngZone.run(() => {
-            //this.router.navigate(['/home']);
+            this.router.navigate(['/home']);
           });
         },
         error: (error) => {
