@@ -4,6 +4,7 @@ import {FileManagementService} from "../../services/file-management.service";
 import {Doc} from "../../class/doc";
 import {JwtHelperService} from "@auth0/angular-jwt";
 import {FormsModule} from "@angular/forms";
+import {Sings} from "../../class/sings";
 
 
 @Component({
@@ -16,6 +17,8 @@ import {FormsModule} from "@angular/forms";
 export class FileManagementComponent implements OnInit{
 
   files: Doc[] = [];
+  signatures: Sings[] = [];
+  haveSigns = false;
   isPopupOpen = false;
   selectedFile: File | null = null;
   helper = new JwtHelperService();
@@ -24,6 +27,7 @@ export class FileManagementComponent implements OnInit{
   sharedWithMe: Doc[] = [];
   shareWith = "";
   privateTempKey = "";
+
 
   ngOnInit(): void {
     let decodeToken;
@@ -53,7 +57,6 @@ export class FileManagementComponent implements OnInit{
         this.sharedWithMe = [];
       }
     });
-
   }
 
   constructor(private filesService: FileManagementService) { }
@@ -118,6 +121,10 @@ export class FileManagementComponent implements OnInit{
     this.selectedFile = null;
   }
 
+  closePopupSigns(): void {
+    this.haveSigns = false;
+  }
+
   shareFile(documentid: string): void {
     this.filesService.shareWithUser(documentid, this.shareWith).subscribe();
     this.filesService.getFilesFromUser(this.username).subscribe({
@@ -145,5 +152,15 @@ export class FileManagementComponent implements OnInit{
         });
       }
     });
+  }
+
+  viewSings(documentId: string): void {
+    this.filesService.viewSings(documentId).subscribe({
+      next: (response: any) => {
+        this.signatures = response;
+        this.haveSigns = true;
+      }
+    })
+
   }
 }

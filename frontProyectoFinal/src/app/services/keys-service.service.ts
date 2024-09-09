@@ -8,7 +8,7 @@ import { User } from "../class/user";
 })
 export class KeysService {
 
-  private apiUrlBase = 'http://localhost:8000/';
+  private apiUrlBase = 'http://localhost:8081/api/';
   private apiGenerateKeys = 'generate-keys/'
   private getKeys = 'getKeys/?user=';
 

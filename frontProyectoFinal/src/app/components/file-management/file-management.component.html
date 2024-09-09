@@ -11,6 +11,7 @@
     <th>Firmar</th>
     <th>Compartido Con</th>
     <th>Eliminar</th>
+    <th>Ver Firmas</th>
   </tr>
   </thead>
   <tbody>
@@ -21,14 +22,22 @@
       <button (click)="shareFile(file.id)">Compartir</button>
     </td>
     <td>
-      <input type="text" placeholder="Ingresa la llave privada" [(ngModel)]="privateTempKey">
-      <button (click)="signFile(file.id)">Firmar Archivo</button>
+      <div *ngIf="!file.signatures?.includes(username)">
+        <input type="text" placeholder="Ingresa la llave privada" [(ngModel)]="privateTempKey">
+        <button (click)="signFile(file.id)">Firmar Archivo</button>
+      </div>
+      <div *ngIf="file.signatures?.includes(username)">
+        <label>¡El archivo ya ha sido firmado!</label>
+      </div>
     </td>
     <td>
       <button (click)="openPopup(file.shared)">Ver</button>
     </td>
     <td>
       <button (click)="deleteFile(file.id)">Eliminar</button>
+    </td>
+    <td>
+      <button (click)="viewSings(file.id)">Ver</button>
     </td>
   </tr>
   </tbody>
@@ -53,6 +62,26 @@
   </div>
 </div>
 
+<div class="popup" *ngIf="haveSigns">
+  <div class="popup-content">
+    <span class="close" (click)="closePopupSigns()">&times;</span>
+    <h2>Firmado por:</h2>
+    <table>
+      <thead>
+      <tr>
+        <th>Usuario</th>
+        <th>Firma</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr *ngFor="let signs of signatures">
+        <td>{{ signs.username}}</td>
+        <td class="firma"> {{ signs.sign }}</td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
 <h1>Compartidos conmigo</h1>
 <table>
   <thead>
@@ -67,8 +96,13 @@
     <td>{{ sharedFile.name }}</td>
     <td> {{ sharedFile.owner }}</td>
     <td>
-      <input type="text" placeholder="Ingresa la llave privada" [(ngModel)]="privateTempKey">
-      <button (click)="signFile(sharedFile.id)">Firmar</button>
+      <div *ngIf="!sharedFile.signatures?.includes(username)">
+        <input type="text" placeholder="Ingresa la llave privada" [(ngModel)]="privateTempKey">
+        <button (click)="signFile(sharedFile.id)">Firmar</button>
+      </div>
+      <div *ngIf="sharedFile.signatures?.includes(username)">
+        <label>¡El archivo ya ha sido firmado!</label>
+      </div>
     </td>
   </tr>
   </tbody>

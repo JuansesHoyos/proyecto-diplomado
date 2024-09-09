@@ -50,4 +50,8 @@ td {
   cursor: pointer;
 }
 
+.firma {
+  max-width: 500px;
+  overflow: scroll;
+}
 

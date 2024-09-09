@@ -503,6 +503,22 @@ def logWithGoogle(user: GoogleAuth):
     return full_user
 
 
+@app.get("/viewSignsFromDocument/")
+def viewSignsFromDocument(documentid: str, authorization: Optional[str] = Header(None)):
+    verify_token(authorization)
+    doc = docs_collection.find_one({"_id": ObjectId(documentid)})
+    firmas = [firma for firma in doc["signatures"].split("#-#") if firma]
+
+    firmas_enviar = [
+        {
+            "username": text.split("(-_-)")[0],
+            "sign": text.split("(-_-)")[1]
+        }
+        for text in firmas
+    ]
+
+    return firmas_enviar
+
 @app.get("/")
 def read_root():
     return {"Hello World"}

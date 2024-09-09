@@ -3,19 +3,21 @@ import {HttpClient, HttpHeaders} from "@angular/common/http";
 import {Doc} from "../class/doc";
 import {User} from "../class/user";
 import {Observable} from "rxjs";
+import {Sings} from "../class/sings";
 
 @Injectable({
   providedIn: 'root'
 })
 export class FileManagementService {
 
-  private apiUrlBase = 'http://localhost:8000/';
+  private apiUrlBase = 'http://localhost:8081/api/';
   private uploadFile = 'upload-file/';
   private getFiles = 'get_files_from_owner/?owner=';
   private deleFile = 'delete_files_from_owner/?documentid=';
   private getSharedsUrl = 'get_shareds/?username=';
   private shareWith = 'share_document/';
   private signFile = 'sign_file/';
+  private getSigns = 'viewSignsFromDocument/?documentid='
   constructor(private http: HttpClient) { }
 
   subirArchivo(b64: string,document: Doc){
@@ -80,7 +82,6 @@ export class FileManagementService {
 
   signDocument(document_id: string, private_key: string): Observable<string> {
     let payload = {document_id, private_key};
-    console.log(payload);
     const authToken = localStorage.getItem("jwt_token");
     const headers = new HttpHeaders({
       Authorization: `Bearer ${authToken}`,
@@ -90,5 +91,13 @@ export class FileManagementService {
       payload,
       { headers }
     );
+  }
+  viewSings(documentid: string){
+    let payload = {documentid};
+    const authToken = localStorage.getItem("jwt_token");
+    const headers = new HttpHeaders({
+      Authorization: `Bearer ${authToken}`,
+    });
+    return this.http.get<Sings[]>(this.apiUrlBase+this.getSigns+documentid,{ headers });
   }
 }
