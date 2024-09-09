@@ -58,7 +58,7 @@ AUDIENCE = "Proyecto Diplomado"
 security = HTTPBearer()
 
 # Conexión a MongoDB
-#dburl = os.getenv('MONGO_URL', 'mongodb://localhost:27017/pruebaDB')
+# dburl = os.getenv('MONGO_URL', 'mongodb://localhost:27017/pruebaDB')
 dburl = os.getenv('MONGO_URL', 'mongodb://persistencia:27017/pruebaDB')
 client = MongoClient(dburl)
 db = client["pruebaDB"]

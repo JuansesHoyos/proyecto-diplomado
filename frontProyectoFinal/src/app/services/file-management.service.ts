@@ -12,12 +12,12 @@ export class FileManagementService {
 
   private apiUrlBase = 'http://localhost:8081/api/';
   private uploadFile = 'upload-file/';
-  private getFiles = 'get_files_from_owner';
+  private getFiles = 'get_files_from_owner/';
   private deleFile = 'delete_files_from_owner';
-  private getSharedsUrl = 'get_shareds';
+  private getSharedsUrl = 'get_shareds/';
   private shareWith = 'share_document/';
   private signFile = 'sign_file/';
-  private getSigns = 'viewSignsFromDocument'
+  private getSigns = 'viewSignsFromDocument/'
 
   constructor(private http: HttpClient) {
   }
